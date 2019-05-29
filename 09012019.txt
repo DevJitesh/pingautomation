@@ -1,0 +1,2267 @@
+using NPOI.XSSF.UserModel;
+
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Interactions;
+using OpenQA.Selenium.Support.UI;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace PingAutomation
+{
+    class CreateAWB
+    {
+        static Boolean result = false;
+        static Boolean result1, result2, result3, result4;
+
+
+        public static void Main(String[] args) 
+        {
+
+
+            String test="KALE LOGISTICS";
+            
+            // Workbook wb1 = new XSSFWorkbook();
+
+            //			 org.apache.poi.ss.usermodel.Sheet sheet = wb1.createSheet("AWB");
+            //			 Row row1 = sheet.createRow(0);
+            //				row1.createCell(0).setCellValue("Air Waybill Number");
+            //				row1.createCell(1).setCellValue("Duration");	
+        int Srno = 1;
+
+        String AWB_Number = null;
+        String Agent_Name = null;
+        String StartTime = null;
+        String EndTime = null;
+        String Duration = null;
+        String Status = null;
+        String Reason = null;
+        String ScreenShotPath = null;
+        int rono = 1;
+        String filename = null;
+        String excelsave_path;
+        String Reportsave_path;
+      
+        long second = 1000l;
+        long minute = 60l * second;
+        long hour = 60l * minute;
+        String starttime1 = null;
+        String endtime1 = null;
+        long diff;
+        
+			 String Report_folder_path = ConfigurationManager.AppSettings["Report_folder_path"].ToString();
+
+        String Reportname = DateTime.Today.ToString("yyyyMMdd_HHmmss");
+            
+
+        //			      FileOutputStream fileOut = new FileOutputStream(Report_folder_path+"REPORT_"+Reportname+".xls");
+        //======================================================================================================================
+
+        String s = DateTime.Today.ToString("dd/MM/yyyy");
+
+            String folderpath = Report_folder_path + s;
+        String Daily_Report = ConfigurationManager.AppSettings["Daily_Report"].ToString() + s;
+        //	Webdriver_Components webcomp=new Webdriver_Components();
+      //  write_excel wx = new write_excel();
+      //  excelsave_path= wx.foldercreate(folderpath);
+			 
+
+		//	 Daily_Report DR = new Daily_Report();
+       // Reportsave_path= DR.foldercreate_D(Daily_Report);
+			
+		//	DR.read_write_D("jitesh", "kale",1, Reportsave_path);
+    	
+//=======================================================================================================================			 
+			
+			 
+	 try
+		{
+
+                IWebDriver driver = new ChromeDriver();
+
+                driver.Manage().Window.Maximize();
+       
+        String TestData_path = ConfigurationManager.AppSettings["TestData_path"].ToString();
+                String RuleData_path = ConfigurationManager.AppSettings["RuleData_path"].ToString();
+                    
+        excel_operations eat1 = new excel_operations(TestData_path); // excel read
+        excel_operations eat3 = new excel_operations(RuleData_path);
+
+        String LIVEurl = eat1.getCellData("login(LIVE)", "URL", 1);
+        String UATurl = eat1.getCellData("login(UAT)", "URL", 1);
+        String Sc;
+        Sc=eat1.screenShot(driver);
+                /*UAT*/
+
+                //		driver.get(UATurl);
+                //		String username=eat1.getCellData("login(UAT)","UN",1);
+                //		String password=eat1.getCellData("login(UAT)","PW",1);
+
+
+                /*LIVE*/
+                driver.Url = ("http://www.cbic.gov.in/");
+                String username = eat1.getCellData("login(LIVE)", "UN", 1);
+        String password = eat1.getCellData("login(LIVE)", "PW", 1);
+
+        driver.FindElement(By.Id("txtUsrName")).SendKeys(username);
+        driver.FindElement(By.Id("txtPswd")).SendKeys(password);
+        driver.FindElement(By.Id("btnLogin")).Click();
+
+
+        //==============================================================================================================================================
+
+        FileInputStream fis = new FileInputStream(TestData_path);
+
+     
+
+        XSSFWorkbook wb = new XSSFWorkbook("");
+                XSSFSheet sh = wb.GetSheet("");
+        int no = AWBdetails.getLastRowNum();
+        //		for(int 1=1;1<=no;1++)
+        //		{
+
+        driver.FindElement(By.XPath(".//*[@id='liquid-bd']/div[1]/div[1]/ul/li[6]")).Click();     //Click AWB Track Ping
+                                                                                                  //		String actualnumber01=eat1.getCellData("AWBdetails", "actual01",1);
+                                                                                                  //		String actualnumber02=eat1.getCellData("AWBdetails", "actual02",1);
+
+        driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                SelectElement yts = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+        yts.SelectByText("Yet To Start");                                                   // Select Yet To Start
+		
+//==========================================================================================================================================
+											 
+		result=eat1.isElementPresent(driver, "//td[Contains(.,'No records found')]");
+		if(result==false)
+		{
+		result=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack']/tbody/tr[7]/td/Table/tbody/tr[1]/td[1]");
+		
+		if(result==true)
+		{
+			IWebElement pagecount = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack']/tbody/tr[7]/td/Table/tbody/tr[1]/td[1]"));
+        String countstring = pagecount.Text;
+        String[] Splited = countstring.Split(' ');
+
+        String pagenumber = Splited[3];
+                        int Pageno = Convert.ToInt32(pagenumber);		
+			for(int p = 1; p<=Pageno;p++)
+		{
+			if(p>1)
+			{
+			    IWebElement nextpage = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl08_BtnNext']"));
+                Thread.Sleep(2000);
+         	    nextpage.Click();
+         	    Thread.Sleep(5000);
+			}
+
+
+    IList<IWebElement> all = driver.FindElements(By.XPath("//input[Contains(@id,'txtOtherComments')]"));
+    String[] allText = new String[all.Count];
+    int i1 = 2; 
+
+        foreach (IWebElement element in all)
+        {	 
+//        	result4=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_imgAssgnDateTime']");
+//        	if(result4==false) 
+//        	{
+        	result=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_imgFinalUpload']");
+        	
+        	if(result==false)
+        	{
+        	IWebElement housecount = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_txtHAWBCount']"));
+    String count = housecount.GetAttribute("value");
+        
+        	 if(count.Contains("0"))
+        	 {
+        		 result1=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_imgDraftUpload']");
+       
+            if (result1== true)
+			{
+            	result2=eat1.isElementPresent(driver,".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_imgAWBCreation']");
+            	
+            if(result2==false)
+            {
+            	Actions draftup = new Actions(driver);
+    IWebElement imgDraftUpload = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_imgDraftUpload']"));
+    Thread.Sleep(2000);
+            	draftup.ClickAndHold(imgDraftUpload).Perform();
+    String DraftUploadDate_Time = imgDraftUpload.GetAttribute("title");
+
+    String[] arrOfStr1 = DraftUploadDate_Time.Split(' ');
+    String DraftUpload_time = arrOfStr1[1];
+
+    starttime1 = DateTime.Today.ToString("HH:mm:ss"); 
+  		        StartTime=starttime1;
+  		          		        
+            	IWebElement AWBno = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_lblawbno']"));
+    String AWBNumber = AWBno.Text;
+
+    String[] WholeAWB = AWBNumber.Split('-');
+    String onlyPrefix = WholeAWB[0];
+    String onlyAWB = WholeAWB[1];
+    AWB_Number=onlyAWB;
+            	     	
+               	onlyPrefix = onlyPrefix.Replace(" ", "");
+        		    		
+            	IWebElement OrgName = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack']/tbody/tr[" + i1 + "]/td[17]"));
+    String OrganizationName = OrgName.Text;
+    Console.WriteLine(OrganizationName);
+    Agent_Name=OrganizationName;
+            	 
+                 int r = 0; String RuleName = null;
+                for(r=1;r<=59;r++)
+                {
+             	 String OrganiseName = eat3.getCellData("RuleMaster", r, "Agent_Name");	
+             	 
+             	 if(OrganiseName.Equals(OrganizationName))
+             	 {
+             		RuleName=eat3.getCellData("RuleMaster",r,"Rule_Name");	
+             	 }
+                }
+                if(!RuleName.Equals("Scan") && !RuleName.Equals("Not_Done") )
+                {	
+                	String UpdateRuleName = RuleName + "_" + onlyPrefix;
+//String UpdateRuleName="SIAM_098";
+
+//=====================================================================================================================================================================
+
+
+
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_drpLinks']")).Click();
+                                                    SelectElement status = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_drpLinks']")));
+status.SelectByText("Assigned");
+            		Thread.Sleep(5000);
+            		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(5000);
+
+            	    if(username.Contains("tiffaawb"))
+            	    {
+            	    	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtOperator']")).SendKeys("testair");
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtAssignedTo']")).SendKeys("testair");
+            	    }
+            	    else
+            	    {
+                	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtOperator']")).SendKeys("Automation");
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtAssignedTo']")).SendKeys("Automation");
+            	    }
+                	
+               	
+                    		
+            		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_lnkSave']")).Click();
+Thread.Sleep(10000);
+                                                    new WebDriverWait(driver, TimeSpan.FromSeconds(70)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']"))));
+                                                    Thread.Sleep(1000);
+                                                    //webcomp.elementToBeClickable(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']"));
+                                                    driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(7000);
+            		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+
+//Thread.Sleep(2000);
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkViewLatest']")).Click();
+Thread.Sleep(10000);
+            		driver.SwitchTo().Frame("Ifram1");
+Thread.Sleep(10000);
+            		//new WebDriverWait(driver, 250).until(ExpectedConditions.visibilityOfElementLocated(By.linkText("view")));
+            		driver.FindElement(By.LinkText("View")).Click();
+Thread.Sleep(10000);
+                
+//=============================================================================================================================================
+		/**
+		   * Files extraction.
+		   */
+        String Chrome_Downloads_path = ConfigurationManager.AppSettings["Chrome_Downloads_path"].ToString();                                                 
+        String Source_folder_path = ConfigurationManager.AppSettings["Source_folder_path"].ToString();
+                                                   
+String Target_folder_path = ConfigurationManager.AppSettings["Target_folder_path"].ToString();
+String Proccessed_folder_path = ConfigurationManager.AppSettings["Proccessed_folder_path"].ToString();
+String Proccess_fail_folder_path = ConfigurationManager.AppSettings["Proccess_fail_folder_path"].ToString();
+                                                
+final File folder = new File(Chrome_Downloads_path);
+String fileName = "null";
+     for (final File fileEntry : folder.listFiles())
+    {
+
+               listFilesForFolder(fileEntry);
+fileName=fileEntry.getName();
+//===============================================================================================================================================
+             Path temp = Files.move
+                       (Paths.get(Chrome_Downloads_path + fileName),
+                       Paths.get(Source_folder_path + fileName));
+           	 
+           	        if(temp != null)
+           	        {
+           	            
+           	        }
+           	        else
+           	        {
+           	            Console.WriteLine("Failed to move the file");
+           	        }
+             
+//===============================================================================================================================================              
+             File file = new File(Source_folder_path + fileName);
+String renamefile = DateTime.Today.ToString("yyyyMMdd_HHmmss");
+                                                        String renamefile1 = renamefile + ".pdf";
+File input_file = new File(Source_folder_path + renamefile1);
+             if(file.renameTo(input_file))
+             {
+                 
+             }
+             else
+             {
+                 Console.WriteLine("File rename failed");
+             }
+//===============================================================================================================================================              
+             
+             String targetfile = DateTime.Today.ToString("yyyyMMdd_HHmmss");
+                                                        String targetfile1 = targetfile + ".xls";
+String TARGET_FILE = Target_folder_path + targetfile1;
+//===========================================================================================================================
+    try
+     {
+
+                                                            //  Runtime.getRuntime().exec("cmd /c start PDECMD -R\"OCR_PDF_RULE\" -F\""+newFile+"\" -O\"D:\\VIVEK\\TIFFA\\OCR\\Target\\pdfdata -TXLS -PA.xls");
+                                                            // Runtime.getRuntime().exec("cmd /c start PDECMD -R\"SIAM_KARGO_LOGISTICS\" -F\""+newFile+"\" -O\"D:\\VIVEK\\TIFFA\\OCR\\Target\\"+targetfile1);
+                                                            System.Runtime.getRuntime().exec("cmd /c start PDECMD -R\""+UpdateRuleName+"\" -F\""+input_file+"\" -O\""+TARGET_FILE);
+Thread.Sleep(8000);
+     }
+     
+     catch (Exception e)
+     {
+         Console.WriteLine("Incorrect action perform");
+e.printStackTrace();
+     }
+//========================================================================================================================================================	
+    File f = new File(TARGET_FILE);
+    if(f.exists() && !f.isDirectory()) 
+    { 
+        
+    
+//========================================================================================================================================================    
+    Path temp1 = Files.move
+             (Paths.get(Source_folder_path + renamefile1),
+             Paths.get(Proccessed_folder_path + renamefile1));
+ 	 
+ 	        if(temp1 != null)
+ 	        {
+ 	           
+ 	        }
+ 	        else
+ 	        {
+ 	            Console.WriteLine("Failed to move the file");
+ 	        }
+//=========================================================================================================================================================      
+ 	       excel_operations eat2 = new excel_operations(Target_folder_path + targetfile1);
+driver.SwitchTo().DefaultContent();
+Thread.Sleep(5000);
+			IWebElement Close = driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[6]/div[11]/button"));
+Thread.Sleep(10000);
+			Close.Click();
+
+			
+			 ArrayList<String> Tabs2 = new ArrayList<String>(driver.getWindowHandles());
+
+//			 driver.Close();
+//			 Thread.Sleep(3000);
+
+driver.SwitchTo().Window(Tabs2.get(1));
+		
+			    Thread.Sleep(10000);
+		  
+		long start = System.currentTimeMillis();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBPrefix']")).SendKeys(onlyPrefix);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(String.valueof(onlyAWB));
+		String ShipName = eat2.getCellData("Sheet1", "Shipper_Name", 1);
+		if(!ShipName.Equals("data not found"))
+		{
+//======================================================================================================================================	
+		driver.FindElement(By.XPath(".//*[@id='btnshipperadd']")).Click();
+
+
+ShipName = ShipName.Replace("[^a-zA-Z0-9]", " ");
+		String ShipName_01 = ShipName.Replace("( +)", " ").Trim();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(ShipName_01);
+
+//		int ShipName_length=ShipName_01.length();
+//		if(ShipName_length >35 )
+//		{
+//		String limit_ShipName = ShipName_01.Substring(0, 35);
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(limit_ShipName);
+//		}
+//		else
+//		{
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(ShipName);
+//		}
+//=======================================================================================================================================				
+String Remain_Addline = ""; String Concate_add2_add1 = null;
+String Addline_01 = eat2.getCellData("Sheet1", "Address_Line01", 1);
+Thread.Sleep(1000);
+		Addline_01 = Addline_01.Replace("[^a-zA-Z0-9]", " ");
+		String MAddline_01 = Addline_01.Replace("( +)", " ").trim();
+
+String Addline_02 = eat2.getCellData("Sheet1", "Address_Line02", 1);
+String Concate_AddLine02;
+Thread.Sleep(1000);
+		Addline_02 = Addline_02.Replace("[^a-zA-Z0-9]", " ");
+		String MAddline_02 = Addline_02.Replace("( +)", " ").trim();
+		
+		
+		if(MAddline_01=="data not found" || MAddline_01=="" || MAddline_01==" ")
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 1");	
+		}
+		else
+		{
+		int Addline_length = MAddline_01.length();
+		
+		if(Addline_length >35)
+		{
+				String limit_Addline = MAddline_01.Substring(0, 35);
+Remain_Addline=MAddline_01.Substring(36, Addline_length);
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys(limit_Addline);
+		}
+		else
+		{
+			Thread.Sleep(1000);
+			
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys(MAddline_01);
+		}
+		}
+//===============================================================================================================================================		
+		
+		if(MAddline_02=="data not found" || MAddline_02==" " || MAddline_02=="")
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 2");
+		}
+		else
+		{
+			if(Remain_Addline=="")
+			{
+				Concate_AddLine02=MAddline_02;
+			}
+			else
+			{
+				Concate_AddLine02=Remain_Addline+MAddline_02;
+			}
+		
+		int Addline_length_02 = Concate_AddLine02.length();
+		if(Addline_length_02 >35)
+		{
+				
+		String limit_Addline_02 = Concate_AddLine02.Substring(0, 35);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine2']")).SendKeys(limit_Addline_02);
+		}
+		else
+		{
+			Thread.Sleep(1000);
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine2']")).SendKeys();
+		}
+		}
+//============================================================================================================================================		
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCountry_txtCode']")).SendKeys("IN");
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillState_txtCode']")).SendKeys("MH");
+//
+//		Thread.Sleep(1000);
+////		String CityName=eat2.getCellData("Sheet1", "City",2);
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCity_txtCode']")).SendKeys("BOM");
+//		Thread.Sleep(1000);
+//
+////		String PinCodeNo=eat2.getCellData("Sheet1", "PinCode",1);
+//		IWebElement we=driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtPinCode']"));
+//		we.SendKeys("400610");
+//		we.Click();
+//		
+//
+//       
+//		Thread.Sleep(1000);
+//		we.SendKeys(Keys.Tab,Keys.ENTER);
+//===============================================================================================================================================
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCountry_txtCode']")).SendKeys("TH");
+
+
+Thread.Sleep(1000);
+//		String CityName=eat2.getCellData("Sheet1", "City",2);
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCity_txtCode']")).SendKeys("BKK");
+Thread.Sleep(1000);
+
+//		String PinCodeNo=eat2.getCellData("Sheet1", "PinCode",1);
+		IWebElement we = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtPinCode']"));
+we.SendKeys("XXXXXX");
+		we.Click();
+		
+
+       
+		Thread.Sleep(1000);
+		we.SendKeys(Keys.Tab,Keys.ENTER);
+//===============================================================================================================================================		
+		
+		driver.FindElement(By.XPath(".//*[@id='imgbtnConsignee']")).Click();
+
+String ConsigName = eat2.getCellData("Sheet1", "Consignee_Name", 1);
+
+
+ConsigName = ConsigName.Replace("[^a-zA-Z0-9]", " ");
+		String ConsigName_01 = ConsigName.Replace("( +)", " ").trim();
+int ConsigName_length = ConsigName_01.length();
+		if(ConsigName_length >35)
+		{
+		String limit_ConsigName = ConsigName_01.Substring(0, 35);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtConName']")).SendKeys(limit_ConsigName);
+		}
+		else
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtConName']")).SendKeys(ConsigName);	
+		}
+//=====================================================================================================================================		
+		String Remain_Addline_02 = "";
+String CAddline_01 = eat2.getCellData("Sheet1", "Address_Line01_c", 1);
+
+Thread.Sleep(1000);
+		CAddline_01 = CAddline_01.Replace("[^a-zA-Z0-9]", " ");
+		String CMAddline_01 = CAddline_01.Replace("( +)", " ").trim();
+		if(CMAddline_01=="data not found" || CMAddline_01=="" || CMAddline_01==" ")
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 1");	
+		}
+		else
+		{
+		int CAddline1_length = CMAddline_01.length();
+		if(CAddline1_length >35)
+		{
+		String limit_Addline01 = CMAddline_01.Substring(0, 35);
+Remain_Addline_02=CMAddline_01.Substring(36, CAddline1_length);
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine1']")).SendKeys(limit_Addline01);
+		}
+		else
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine1']")).SendKeys(CMAddline_01);
+		}
+		}
+//=========================================================================================================================
+		
+		String CAddline_02 = eat2.getCellData("Sheet1", "Address_Line02_c", 1);
+String Concate_CAddLine02;
+Thread.Sleep(1000);
+		CAddline_02 = CAddline_02.Replace("[^a-zA-Z0-9]", " ");
+		String CMAddline_02 = CAddline_02.Replace("( +)", " ").trim();
+		if(CMAddline_02=="data not found" || CMAddline_02=="" || CMAddline_02==" ")
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 2");	
+		}
+		else
+		{
+			if(Remain_Addline_02=="")
+			{
+				Concate_CAddLine02=CMAddline_02;
+			}
+			else
+			{
+				Concate_CAddLine02=Remain_Addline_02+CMAddline_02;
+			}
+			
+		int CAddline2_length = Concate_CAddLine02.length();
+		if(CAddline2_length >35)
+		{
+		String limit_Addline02 = Concate_CAddLine02.Substring(0, 35);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine2']")).SendKeys(limit_Addline02);
+		}
+		else
+		{
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine2']")).SendKeys(Concate_CAddLine02);
+		}
+		}		
+//=========================================================================================================================		
+//		//String CountryName1=eat1.getCellData("AWBdetails", "Country_c",1);
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCountry_txtName']")).SendKeys("United Arab Emirates");
+//		
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillState_txtCode']")).SendKeys("DX");
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCity_txtCode']")).SendKeys("DXB");
+//		
+//		//String CityName1=eat2.getCellData("Sheet1", "City_c",2);
+//		//driver.FindElement(By.Id("ctl00_hldPage_uclConsAddressInfo_txtOtherCity")).SendKeys("MUMBAI");
+//		
+//		
+//		//String PinCode1=eat2.getCellData("Sheet1", "PinCode_c",2);
+//		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtPinCode']")).SendKeys("000000");
+//		Thread.Sleep(1000);
+//		
+//		IWebElement wf=driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclAlsoNotifyAddressInfo_txtPinCode']"));
+//		wf.Click();
+//		wf.SendKeys(Keys.Tab,Keys.ENTER);
+//		Thread.Sleep(1000);
+//==============================================================================================================================================
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCountry_txtName']")).SendKeys("INDIA");
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCity_txtCode']")).SendKeys("BOM");
+
+//String CityName1=eat2.getCellData("Sheet1", "City_c",2);
+//driver.FindElement(By.Id("ctl00_hldPage_uclConsAddressInfo_txtOtherCity")).SendKeys("MUMBAI");
+
+
+//String PinCode1=eat2.getCellData("Sheet1", "PinCode_c",2);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtPinCode']")).SendKeys("XXXXXX");
+Thread.Sleep(1000);
+		
+		IWebElement wf = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclAlsoNotifyAddressInfo_txtPinCode']"));
+wf.Click();
+		wf.SendKeys(Keys.Tab,Keys.ENTER);
+		Thread.Sleep(1000);
+//===============================================================================================================================================
+//Issuing Carrier's Agent Name and City
+		String IssuAgent = eat2.getCellData("Sheet1", "Agent", 1);
+
+IWebElement agnt = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAgentSelect']"));
+//		if(IssuAgent.Equals("data not found") && IssuAgent.Equals("  "))
+		//{
+				if(OrganizationName.EqualsIgnoreCase("TIFFA AWB Service"))
+				{
+					IssuAgent="KALE LOGISTICS";
+				}
+				else
+				{
+				IssuAgent=OrganizationName;
+				}
+				//IssuAgent="SIAM KARGO LOGISTICS CO LTD";
+				//IssuAgent="EAGLES AIR AND SEA (THAILAND) CO., LTD";
+				
+	//	  }
+	//	String AgentConcate= IssuAgent.Substring(0, IssuAgent.indexOf("."));
+		
+		agnt.SendKeys(IssuAgent);
+		Thread.Sleep(2000);
+		agnt.SendKeys(Keys.CONTROL+"A");
+		Thread.Sleep(2000);
+		agnt.SendKeys(Keys.ARROW_DOWN);
+		Thread.Sleep(1000);
+		agnt.SendKeys(Keys.Tab);
+		Thread.Sleep(1000);
+		
+		
+		String AccountInformatiom = eat2.getCellData("Sheet1", "Accounting_Information", 1);
+AccountInformatiom = AccountInformatiom.Replace("[^a-zA-Z0-9]", " ");
+		String AccountInformatiom_01 = AccountInformatiom.Replace("( +)", " ").trim();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_accountinginfo']")).SendKeys(AccountInformatiom_01);
+//================================================================================================================================
+//flight details
+String Carrier_code_01 = null, Airline_Date_01, Airline_Date_001, Flight_Number_01 = null, Current_Date, Flight_date01 = null, Carrier_code_02 = null, Airline_Date_02 = null, Airline_Date_002, Flight_Number_02 = null, Flight_date02 = null, Carrier_code_03 = null, Airline_Date_03 = null, Airline_Date_003, Flight_Number_03 = null, Flight_date03 = null;
+String[] Array_flightdetails_01, Array_flightdetails_02, Array_flightdetails_03;
+Current_Date=new SimpleDateFormat("/MM/yyyy").format(Calendar.getInstance().getTime());
+				 
+				 String OriPort = eat2.getCellData("Sheet1", "Origin_Port", 1);
+
+Console.WriteLine(OriPort.charAt(0));
+				 
+				 String OriPort_01 = OriPort.Replace("( +)", " ").trim();
+				 if(OriPort_01=="" ||  OriPort=="data not found")
+				 {
+					 OriPort_01="data not found"; 
+				 }
+				 
+				 if(OriPort_01.Equals("SUVARNABHUMI AIRPORT , THAILAND"))
+				 {
+					 OriPort_01="BKK";
+				 }
+				 else if(OriPort_01.Equals("BANGKOK/THAILAND"))
+				 {
+					 OriPort_01="BKK";
+				 }
+				 else if(OriPort_01.Equals("BANGKOK,THAILAND"))
+				 {
+					 OriPort_01="BKK";
+				 }
+				 else if(OriPort_01.Equals("SUVARNABHUMI AIRPORT"))
+				 {
+					 OriPort_01="BKK";
+				 }
+				 else if(OriPort_01.Equals("DON MUEANG AIRPORT, THAILAND"))
+				 {
+					 OriPort_01="DMK";
+				 }
+				 else if(OriPort_01.Equals("DON MUEANG AIRPORT"))
+				 {
+					 OriPort_01="DMK";
+				 }
+				 
+				String Via1 = eat2.getCellData("Sheet1", "Via01", 1);
+String Via1_01 = Via1.Replace("( +)", " ").trim();
+				if(Via1_01=="" || Via1=="data not found")
+				 {
+					Via1_01="data not found"; 
+				 }
+				
+				String Via2 = eat2.getCellData("Sheet1", "Via02", 1);
+String Via2_01 = Via2.Replace("( +)", " ").trim();
+				
+				if(Via2_01=="" || Via2=="data not found")
+				 {
+					Via2_01="data not found"; 
+				 }
+				
+				String DestPort = eat2.getCellData("Sheet1", "Destn_Port", 1);
+String DestPort_01 = DestPort.Replace("( +)", " ").trim();
+				if(DestPort_01==("") || DestPort=="data not found")
+				 {
+					DestPort_01="data not found"; 
+				 }
+				
+		
+				String Flight_Details_01 = eat2.getCellData("Sheet1", "Flight_Details_01", 1);
+String Flight_Details_02 = eat2.getCellData("Sheet1", "Flight_Details_02", 1);
+String Flight_Details_03 = eat2.getCellData("Sheet1", "Flight_Details_03", 1);
+				
+				if(IssuAgent=="KALE LOGISTICS")
+				{
+					Flight_Details_01="9W";
+					Flight_Details_02="9W1922/26";
+					Flight_Details_03="data not found";
+				}
+				int lenght_fli_det_01 = Flight_Details_01.Length();
+				if(lenght_fli_det_01<=4)
+				{
+					Flight_Details_01="data not found";
+				}
+				
+				
+				if(DestPort=="data not found")
+				{
+					Flight_Details_01=Flight_Details_02;
+					Flight_Details_02=Flight_Details_03;
+				}
+				else if(Via2=="data not found")
+				{
+					Flight_Details_01=Flight_Details_02;
+				}
+				
+				if(Flight_Details_03 !="data not found")
+				{				
+					Array_flightdetails_01  = Flight_Details_01.Split('/');
+					 Carrier_code_01=Flight_Details_01.Substring(0,2);
+					 Airline_Date_001=Array_flightdetails_01[1];
+					 Airline_Date_01=Airline_Date_001.Substring(0,2);
+					 Flight_Number_01=Array_flightdetails_01[0].Substring(2);
+Current_Date= DateTime.Today.ToString("/MM/yyyy");
+
+                                                                    Flight_date01 =Airline_Date_01+Current_Date;
+				 
+					 Array_flightdetails_02  = Flight_Details_02.Split('/');
+					 Carrier_code_02=Flight_Details_02.Substring(0,2);
+					 Airline_Date_002=Array_flightdetails_02[1];
+					 Airline_Date_02=Airline_Date_002.Substring(0,2);
+					 Flight_Number_02=Array_flightdetails_02[0].Substring(2);
+Flight_date02=Airline_Date_02+Current_Date;
+				
+					 Array_flightdetails_03  = Flight_Details_03.Split('/');
+					 Carrier_code_03=Flight_Details_03.Substring(0,2);
+					 Airline_Date_003=Array_flightdetails_03[1];
+					 Airline_Date_03=Airline_Date_003.Substring(0,2);
+					 Flight_Number_03=Array_flightdetails_03[0].Substring(2);
+Flight_date03=Airline_Date_03+Current_Date;
+				}
+
+				else if(Flight_Details_02 !="data not found")
+				{
+						Array_flightdetails_01  = Flight_Details_01.Split('/');
+						Carrier_code_01=Flight_Details_01.Substring(0,2);
+						Airline_Date_001=Array_flightdetails_01[1];
+						Airline_Date_01=Airline_Date_001.Substring(0,2);
+						Flight_Number_01=Array_flightdetails_01[0].Substring(2);
+Current_Date=new SimpleDateFormat("/MM/yyyy").format(Calendar.getInstance().getTime());
+						Flight_date01=Airline_Date_01+Current_Date;
+					 
+						Array_flightdetails_02  = Flight_Details_02.Split('/');
+						Carrier_code_02=Flight_Details_02.Substring(0,2);
+						Airline_Date_002=Array_flightdetails_02[1];
+						Airline_Date_02=Airline_Date_002.Substring(0,2);
+						Flight_Number_02=Array_flightdetails_02[0].Substring(2);
+Flight_date02=Airline_Date_02+Current_Date;
+				}
+				else if(Flight_Details_01 !="data not found")
+				{
+						Array_flightdetails_01  = Flight_Details_01.Split('/');
+						Carrier_code_01=Flight_Details_01.Substring(0,2);
+						Airline_Date_001=Array_flightdetails_01[1];
+						Airline_Date_01=Airline_Date_001.Substring(0,2);
+						Flight_Number_01=Array_flightdetails_01[0].Substring(2);
+Current_Date = DateTime.Today.ToString("/MM/yyyy");                                                                   
+						Flight_date01=Airline_Date_01+Current_Date;
+				}
+				
+//============================================================================================================================================					
+				//Routing details		
+				String Current_Date_for_defaultflight = DateTime.Today.ToString("dd");
+                                                                driver.FindElement(By.XPath(".//*[@id='imgairport']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillOriginAirport_txtCode']")).SendKeys(OriPort_01);
+				
+				if(DestPort_01!="data not found")
+				{
+					driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(DestPort_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute1_txtCode']")).SendKeys(Via1_01);
+IWebElement btn_via2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtCode']"));
+btn_via2.SendKeys(Via2_01);
+					btn_via2.SendKeys(Keys.Tab);
+					Thread.Sleep(1000);
+					driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+Thread.Sleep(1000);
+					driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier1']")).SendKeys(Carrier_code_01);
+					if(Flight_Number_01=="data not found")
+					{
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys("123");
+					}
+					else
+					{
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys(Flight_Number_01);
+					}
+					
+					if(Flight_date01=="data not found")
+					{
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Current_Date_for_defaultflight);
+					}
+					else
+					{
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Flight_date01);
+					}
+					driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier2']")).SendKeys(Carrier_code_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno2']")).SendKeys(Flight_Number_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate2']")).SendKeys(Flight_date02);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier3']")).SendKeys(Carrier_code_03);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno3']")).SendKeys(Flight_Number_03);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate3']")).SendKeys(Flight_date03);
+				}	
+				else if(Via2_01!="data not found")
+				{	
+					driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(Via2_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute1_txtCode']")).SendKeys(Via1_01);
+driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier1']")).SendKeys(Carrier_code_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys(Flight_Number_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Flight_date01);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier2']")).SendKeys(Carrier_code_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno2']")).SendKeys(Flight_Number_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate2']")).SendKeys(Flight_date02);
+				}
+				else
+				{
+					driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(Via1);
+driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier1']")).SendKeys(Carrier_code_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys(Flight_Number_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Flight_date01);
+				}
+				
+//				IWebElement rd=driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtName']"));
+//				rd.Click();
+//				rd.SendKeys(Keys.Tab,Keys.ENTER);
+//				Thread.Sleep(1000);
+			//	driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+//==================================================================================================================================================
+		//Handling Information
+				String Handling_Information = eat2.getCellData("Sheet1", "Handling_Information", 1);
+Handling_Information = Handling_Information.Replace("[^a-zA-Z0-9]", " ");
+				String Handling_Information_01 = Handling_Information.Replace("( +)", " ").trim();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtssr']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtssr']")).SendKeys(Handling_Information_01);
+
+
+//===================================================================================================================
+//charge code
+//	String ChargeCode=eat2.getCellData("Sheet1", "Charge_code",1);
+String ChargeCode_01 = "PX";
+
+IWebElement cc = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ddlChargeCode']"));
+cc.Click();
+                                                                SelectElement cc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ddlChargeCode']")));
+cc1.SelectByText(ChargeCode_01);
+//============================================================================================================================================
+
+				driver.FindElement(By.XPath(".//*[@id='addDimensions_1']")).Click();
+
+String Numberpieces = eat2.getCellData("Sheet1", "No_pcs", 1);
+				if(Numberpieces=="data not found")
+				{
+					driver.FindElement(By.XPath(".//*[@id='txtNoPcs_1']")).SendKeys("1");
+				}
+				else
+				{
+					String Numberpieces_01 = Numberpieces.Substring(0, Numberpieces.IndexOf("."));
+driver.FindElement(By.XPath(".//*[@id='txtNoPcs_1']")).SendKeys(Numberpieces_01);
+				}
+				
+				String length = eat1.getCellData("AWBdetails", "Length", 1);
+driver.FindElement(By.XPath(".//*[@id='txtLength_1']")).SendKeys(length);
+
+String width = eat1.getCellData("AWBdetails", "Width", 1);
+driver.FindElement(By.XPath(".//*[@id='txtWidth_1']")).SendKeys(width);
+
+String hieght = eat1.getCellData("AWBdetails", "Height", 1);
+driver.FindElement(By.XPath(".//*[@id='txtHeight_1']")).SendKeys(hieght);
+
+//driver.FindElement(By.XPath(".//*[@id='addrow_1']")).Click();
+
+                IWebElement slac = driver.FindElement(By.XPath(".//*[@id='txtDmnSlac_1']"));
+                slac.Click();
+                                                                slac.SendKeys(Keys.Tab);
+                                                                slac.SendKeys(Keys.Tab); slac.SendKeys(Keys.Enter);
+
+                String GrossWeight = eat2.getCellData("Sheet1", "Gross_Wt", 1);
+				if(GrossWeight=="data not found")
+				{
+					driver.FindElement(By.XPath(".//*[@id='txtCgGrWt_1']")).SendKeys("1");
+				}
+				else
+				{
+					driver.FindElement(By.XPath(".//*[@id='txtCgGrWt_1']")).SendKeys(GrossWeight);
+				}
+				
+				
+				String RateClass = eat2.getCellData("Sheet1", "Rate_Class", 1);
+String RateClass_01 = RateClass.Replace("( +)", " ").trim();
+				if(RateClass_01.Contains(""))
+				{
+					RateClass_01="data not found";
+				}
+				
+				if(RateClass_01=="data not found")
+				{
+                                                                    SelectElement rc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='selRateClass_1']")));
+rc1.SelectByText("Q");
+				}
+				else
+				{
+                                                                    SelectElement rc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='selRateClass_1']")));
+rc1.SelectByText(RateClass_01);
+				}
+				
+				String ComdityNo = eat2.getCellData("Sheet1", "Commodity_No", 1);
+String ComdityNo_01 = ComdityNo.Replace("( +)", " ").trim();
+				if(ComdityNo_01==" ")
+				{
+					ComdityNo_01="data not found";
+				}
+				if(RateClass_01.Contains("C") || RateClass_01.Contains("S")) 
+				{
+					if(ComdityNo_01=="data not found")
+					{
+						driver.FindElement(By.XPath(".//*[@id='txtCommNo_1']")).SendKeys("111");
+					}
+					else
+					{
+						driver.FindElement(By.XPath(".//*[@id='txtCommNo_1']")).SendKeys(ComdityNo_01);
+					}
+				}
+				
+				String Charge = eat2.getCellData("Sheet1", "Charges", 1);
+String Charge_01 = Charge.Replace("( +)", " ").trim();
+				
+				if(Charge_01.Contains("data not found") || Charge_01.Contains(""))
+				{
+					driver.FindElement(By.XPath(".//*[@id='txtCgRate_1']")).SendKeys("1");	
+				}
+				else
+				{
+				driver.FindElement(By.XPath(".//*[@id='txtCgRate_1']")).SendKeys(Charge_01);
+Thread.Sleep(1000);
+				}
+				String nature = eat2.getCellData("Sheet1", "Nature", 1);
+Thread.Sleep(1000);
+				nature = nature.Replace("[^a-zA-Z0-9]", " ");
+				String nature_01 = nature.Replace("( +)", " ").trim();
+driver.FindElement(By.XPath(".//*[@id='txtCgDesc_1']")).SendKeys(nature_01);
+Thread.Sleep(1000);
+				IWebElement tcc = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSaveAwb']"));
+tcc.Click();
+				Thread.Sleep(10000);
+				
+				excelsave_path=Sc;
+//======================================================================================================================================================				
+				endtime1 = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
+		        EndTime=endtime1; 
+			
+		        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+Date date1 = format.parse(StartTime);
+Date date2 = format.parse(EndTime);
+
+diff = date2.getTime() - date1.getTime();
+		        
+	            Duration=String.format("%02d", diff / hour)+":"+String.format("%02d", (diff % hour) / minute)+":"+String.format("%02d", (diff % minute) / second);
+	        		
+//==============================================================================================================================		
+ 		result3=eat1.isElementPresent(driver,".//*[@id='ctl00_hldPage_lblMessage2']");
+ 		Thread.Sleep(3000);
+		if(result3== false)//AWB not create successfully
+		{  
+			driver.Close();
+			driver.SwitchTo().Window(Tabs2.get(0));
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                                    SelectElement status0101 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0101.SelectByText("Yet To Start");
+    		Thread.Sleep(3000);
+    		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+
+    	      
+        	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtOperator']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtAssignedTo']")).Clear();
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkSave']")).Click();
+Thread.Sleep(5000);
+    		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(2000);
+    		 driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                                                                    SelectElement yts0101 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0101.SelectByText("Yet To Start");        
+    			i1=2;
+    			
+    		//	wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, excelsave_path);
+    			
+		}
+		else//AWB create successfully
+		{
+			DR.read_write_D(AWBNumber, OrganizationName,DraftUpload_time,StartTime,EndTime,Duration,1, Reportsave_path);
+			driver.Close();
+			driver.SwitchTo().Window(Tabs2.get(0));
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                                    SelectElement status0102 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0102.SelectByText("Draft Saved");
+    		Thread.Sleep(1000);
+    		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+    		
+    	    driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+
+                                                                    SelectElement yts0102 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0102.SelectByText("Yet To Start");  
+    		Console.WriteLine("Airway Bill Created successfully");
+
+
+long end = System.currentTimeMillis();
+formatter = new DecimalFormat("#0.00000");
+Console.WriteLine(i1+".Execution time for AWB No. "+AWB_Number+"is " + formatter.format((end - start) / 1000d) + " seconds");
+    		DR.foldercreate_D(Report_folder_path);
+    		//wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, excelsave_path);
+		}
+		}
+		else//shipper name not found
+		{
+			driver.Close();
+			driver.SwitchTo().Window(Tabs2.get(0));
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                                SelectElement status0101 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0101.SelectByText("Yet To Start");
+    		Thread.Sleep(3000);
+    		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+
+    	      
+        	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtOperator']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtAssignedTo']")).Clear();
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkSave']")).Click();
+Thread.Sleep(5000);
+    		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(2000);
+    		 driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                                                                SelectElement yts0101 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0101.SelectByText("Yet To Start");        
+    			i1=2;
+		}
+		}
+    else//file not exist in target folder 
+    {
+    	Path temp1 = Files.move
+                 (Paths.get(Source_folder_path + renamefile1),
+                 Paths.get(Proccess_fail_folder_path + renamefile1));
+     	 
+     	        if(temp1 != null)
+     	        {
+     	           
+     	        }
+     	        else
+     	        {
+     	            Console.WriteLine("Failed to move the file");
+     	        }
+     	driver.SwitchTo().DefaultContent();
+Thread.Sleep(3000);
+    	IWebElement Close = driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[6]/div[11]/button"));
+Thread.Sleep(3000);
+		Close.Click();
+
+
+                                                            IReadOnlyCollection<string> Windowhandles41 = driver.WindowHandles; ;
+                                                            string lasttab44 = Windowhandles41.Last();
+                                                            driver.SwitchTo().Window(driver.WindowHandles.Last());
+	   	Thread.Sleep(3000);
+	    driver.Close();
+
+                                                            driver.SwitchTo().Window(driver.WindowHandles.First());
+
+                                                            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                            SelectElement status0104 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0104.SelectByText("Yet To Start");
+		Thread.Sleep(2000);
+		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+
+	      
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtOperator']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtAssignedTo']")).Clear();
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkSave']")).Click();
+Thread.Sleep(3000);
+		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(2000);
+	    driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                                                            SelectElement yts0104 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0104.SelectByText("Yet To Start");        
+    }
+     	}  
+     
+                		}
+					                else
+					                	{
+					            			i1++;
+					                	}
+            			}
+						            else
+						        		{
+						            		i1++;
+						        		}
+						}
+							        else
+							        	{
+							        		i1++;
+							        	}
+        	 			}
+						        	else
+							        	{
+							        		i1++;
+							        	}
+        	 			}
+						        	else
+						        		{
+						        		i1++;
+						        		}
+//        	 			}
+//						        	else
+//						        		{
+//						        		i1++;
+//						        		}
+        					
+    
+        }
+        
+       
+//        	Reason="There is no such Drafts present";
+//        	wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, filename);
+        }
+			Reason="There is no such Drafts present";
+			
+//			driver.Close();
+//			wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, filename);
+	}
+		
+//***************************************************************//*********************************************//****************************
+//****************************************************************//**********************************************//**************************		
+		else
+		{
+			List<IWebElement> all = driver.FindElements(By.XPath("//input[Contains(@id,'txtOtherComments')]"));
+String[] allText = new String[all.size()];
+int i1 = 2; 
+
+	        for (IWebElement element : all)
+	        {	
+//	        	result4=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_imgAssgnDateTime']");
+//	        	if(result4==false) 
+//	        	{
+	        	result=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_imgFinalUpload']");
+	        	if(result==false)
+	        	{
+	        	IWebElement housecount = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_txtHAWBCount']"));
+String count = housecount.GetAttribute("value");
+	        
+	        	 if(count.Contains("0"))
+	        	 {
+	        		 result1=eat1.isElementPresent(driver, ".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_imgDraftUpload']");
+	       
+	            if (result1== true)
+				{
+	            	result2=eat1.isElementPresent(driver,".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_imgAWBCreation']");
+	            	
+	   
+	            
+	            	if(result2==false)
+	            {
+	            		Actions draftup = new Actions(driver);
+IWebElement imgDraftUpload = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_imgDraftUpload']"));
+Thread.Sleep(2000);
+	                	draftup.clickAndHold(imgDraftUpload).perform();
+String DraftUploadDate_Time = imgDraftUpload.GetAttribute("title");
+
+String[] arrOfStr1 = DraftUploadDate_Time.Split(" ");
+String DraftUpload_time = arrOfStr1[1];
+
+starttime1 = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
+	      		        StartTime=starttime1;
+	      		        
+	            		IWebElement AWBno = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_lblawbno']"));
+String AWBNumber = AWBno.Text;
+
+String[] WholeAWB = AWBNumber.Split("-");
+String onlyPrefix = WholeAWB[0];
+String onlyAWB = WholeAWB[1];
+AWB_Number=onlyAWB;
+	            		
+	            		onlyPrefix = onlyPrefix.Replace(" ", "");
+	            	
+	            		IWebElement OrgName = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack']/tbody/tr[" + i1 + "]/td[17]"));
+String OrganizationName = OrgName.Text;
+Console.WriteLine(OrganizationName);
+
+// excel_operations eat3=new excel_operations("D:\\VIVEK\\TIFFA\\TestData\\RuleExcel.xlsx"); 
+int r = 0; String RuleName = null;
+	                for(r=1;r<=59;r++)
+	                {
+	             	 String OrganiseName = eat3.getCellData("RuleMaster", r, "Agent_Name");	
+	             	 
+	             	 if(OrganiseName.Equals(OrganizationName))
+	             	 {
+	             		RuleName=eat3.getCellData("RuleMaster",r,"Rule_Name");	
+	             	 }
+	                }
+	                if(!RuleName.Equals("Scan") && !RuleName.Equals("Not_Done") )
+	                {
+	                	String UpdateRuleName = RuleName + "_" + onlyPrefix;
+//String UpdateRuleName="SIAM_098";
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_drpLinks']")).Click();
+                                                SelectElement status = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0" + i1 + "_drpLinks']")));
+status.SelectByText("Assigned");
+	            		Thread.Sleep(5000);
+	            		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(5000);
+	                	
+	            		if(username.Contains("tiffaawb"))
+	            	    {
+	            	    	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtOperator']")).SendKeys("testair");
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtAssignedTo']")).SendKeys("testair");
+	            	    }
+	            	    else
+	            	    {
+	                	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtOperator']")).SendKeys("Automation");
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_txtAssignedTo']")).SendKeys("Automation");
+	            	    }
+	                	
+	            		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl0"+i1+"_lnkSave']")).Click();
+Thread.Sleep(10000);
+	            		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(10000);
+	            		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+
+//Thread.Sleep(2000);
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkViewLatest']")).Click();
+Thread.Sleep(10000);
+	            		driver.SwitchTo().frame("Ifram1");
+Thread.Sleep(10000);
+	            		
+	            		driver.FindElement(By.linkText("View")).Click();
+Thread.Sleep(10000);
+	                     
+	//=============================================================================================================================================
+	            		/**
+	          		   * Files extraction.
+	          		   */
+	                  String Chrome_Downloads_path = props.getProperty("Chrome_Downloads_path");
+String Source_folder_path = props.getProperty("Source_folder_path");
+String Target_folder_path = props.getProperty("Target_folder_path");
+String Proccessed_folder_path = props.getProperty("Proccessed_folder_path");
+String Proccess_fail_folder_path = props.getProperty("Proccess_fail_folder_path");
+final File folder = new File(Chrome_Downloads_path);
+String fileName = "null";
+	               for (final File fileEntry : folder.listFiles())
+	              {
+
+                             listFilesForFolder(fileEntry);
+fileName=fileEntry.getName();
+	//===============================================================================================================================================
+	             Path temp = Files.move
+                         (Paths.get(Chrome_Downloads_path + fileName),
+                                    Paths.get(Source_folder_path + fileName));
+	           	 
+	           	        if(temp != null)
+	           	        {
+	           	            
+	           	        }
+	           	        else
+	           	        {
+	           	            Console.WriteLine("Failed to move the file");
+	           	        }
+	             
+	//===============================================================================================================================================              
+	           	     File file = new File(Source_folder_path + fileName);
+String renamefile = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+String renamefile1 = renamefile + ".pdf";
+File input_file = new File(Source_folder_path + renamefile1);
+	                 if(file.renameTo(input_file))
+	             {
+	                 
+	             }
+	             else
+	             {
+	                 Console.WriteLine("File rename failed");
+	             }
+	//===============================================================================================================================================              
+	               
+	                 String targetfile = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+String targetfile1 = targetfile + ".xls";
+String TARGET_FILE = Target_folder_path + targetfile1;
+	//===========================================================================================================================
+	                 try
+	                 { 
+	                 
+	               	//  Runtime.getRuntime().exec("cmd /c start PDECMD -R\"OCR_PDF_RULE\" -F\""+newFile+"\" -O\"D:\\VIVEK\\TIFFA\\OCR\\Target\\pdfdata -TXLS -PA.xls");
+	               	 // Runtime.getRuntime().exec("cmd /c start PDECMD -R\"SIAM_KARGO_LOGISTICS\" -F\""+newFile+"\" -O\"D:\\VIVEK\\TIFFA\\OCR\\Target\\"+targetfile1);
+	                	 Runtime.getRuntime().exec("cmd /c start PDECMD -R\""+UpdateRuleName+"\" -F\""+input_file+"\" -O\""+TARGET_FILE);
+Thread.Sleep(8000);
+	                 }
+	                 
+	                 catch (Exception e)
+	                 {
+	                     Console.WriteLine("Incorrect action perform");
+e.printStackTrace();
+	                 }
+	//========================================================================================================================================================	
+	                 File f = new File(TARGET_FILE);
+	                 if(f.exists() && !f.isDirectory()) 
+	                 { 
+	                     
+	                 
+	//========================================================================================================================================================	
+	     Path temp1 = Files.move
+                 (Paths.get(Source_folder_path + renamefile1),
+                             Paths.get(Proccessed_folder_path + renamefile1));	 	
+	     
+	 	        if(temp1 != null)
+	 	        {
+	 	           
+	 	        }
+	 	        else
+	 	        {
+	 	            Console.WriteLine("Failed to move the file");
+	 	        }
+	//=========================================================================================================================================================      
+	 	       excel_operations eat2 = new excel_operations(Target_folder_path + targetfile1);
+driver.SwitchTo().DefaultContent();
+Thread.Sleep(5000);
+				IWebElement Close = driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[6]/div[11]/button"));
+Thread.Sleep(10000);
+				Close.Click();
+
+				
+				 ArrayList<String> Tabs2 = new ArrayList<String>(driver.getWindowHandles());
+
+//				 driver.Close();
+//				 Thread.Sleep(3000);
+
+driver.SwitchTo().Window(Tabs2.get(1));
+			
+				    Thread.Sleep(10000);
+			  
+			long start = System.currentTimeMillis();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBPrefix']")).SendKeys(onlyPrefix);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(String.valueOf(onlyAWB));
+			String ShipName = eat2.getCellData("Sheet1", "Shipper_Name", 1);
+			if(!ShipName.Equals("data not found"))
+			{
+//========================================================================================================================================
+			driver.FindElement(By.XPath(".//*[@id='btnshipperadd']")).Click();
+
+
+ShipName = ShipName.Replace("[^a-zA-Z0-9]", " ");
+			String ShipName_01 = ShipName.Replace("( +)", " ").trim();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(ShipName_01);
+
+//			int ShipName_length=ShipName_01.length();
+//			if(ShipName_length >35 )
+//			{
+//			String limit_ShipName = ShipName_01.Substring(0, 35);
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(limit_ShipName);
+//			}
+//			else
+//			{
+//				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(ShipName);
+//			}
+//============================================================================================================================================
+String Remain_Addline = ""; String Concate_add2_add1 = null;
+String Addline_01 = eat2.getCellData("Sheet1", "Address_Line01", 1);
+Thread.Sleep(1000);
+			Addline_01 = Addline_01.Replace("[^a-zA-Z0-9]", " ");
+			String MAddline_01 = Addline_01.Replace("( +)", " ").trim();
+
+String Addline_02 = eat2.getCellData("Sheet1", "Address_Line02", 1);
+String Concate_AddLine02;
+Thread.Sleep(1000);
+			Addline_02 = Addline_02.Replace("[^a-zA-Z0-9]", " ");
+			String MAddline_02 = Addline_02.Replace("( +)", " ").trim();
+			
+			
+			if(MAddline_01=="data not found" || MAddline_01=="" || MAddline_01==" ")
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 1");	
+			}
+			else
+			{
+			int Addline_length = MAddline_01.length();
+			
+			if(Addline_length >35)
+			{
+					String limit_Addline = MAddline_01.Substring(0, 35);
+Remain_Addline=MAddline_01.Substring(36, Addline_length);
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys(limit_Addline);
+			}
+			else
+			{
+				Thread.Sleep(1000);
+				
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys(MAddline_01);
+			}
+			}
+//=======================================================================================================================================
+			
+			if(MAddline_02=="data not found" || MAddline_02==" " || MAddline_02=="")
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 2");
+			}
+			else
+			{
+				if(Remain_Addline=="")
+				{
+					Concate_AddLine02=MAddline_02;
+				}
+				else
+				{
+					Concate_AddLine02=Remain_Addline+MAddline_02;
+				}
+			
+			int Addline_length_02 = Concate_AddLine02.length();
+			if(Addline_length_02 >35)
+			{
+					
+			String limit_Addline_02 = Concate_AddLine02.Substring(0, 35);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine2']")).SendKeys(limit_Addline_02);
+			}
+			else
+			{
+				Thread.Sleep(1000);
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine2']")).SendKeys(Concate_AddLine02);
+			}
+			}
+//===============================================================================================================================================			
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCountry_txtCode']")).SendKeys("IN");
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillState_txtCode']")).SendKeys("MH");
+//
+//			Thread.Sleep(1000);
+////			String CityName=eat2.getCellData("Sheet1", "City",2);
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCity_txtCode']")).SendKeys("BOM");
+//			Thread.Sleep(1000);
+//
+////			String PinCodeNo=eat2.getCellData("Sheet1", "PinCode",1);
+//			IWebElement we=driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtPinCode']"));
+//			we.SendKeys("400610");
+//			we.Click();
+//			
+//
+//	       
+//			Thread.Sleep(1000);
+//			we.SendKeys(Keys.Tab,Keys.ENTER);
+//=====================================================================================================================================================
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCountry_txtCode']")).SendKeys("TH");
+
+
+Thread.Sleep(1000);
+//			String CityName=eat2.getCellData("Sheet1", "City",2);
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCity_txtCode']")).SendKeys("BKK");
+Thread.Sleep(1000);
+
+//			String PinCodeNo=eat2.getCellData("Sheet1", "PinCode",1);
+			IWebElement we = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtPinCode']"));
+we.SendKeys("XXXXXX");
+			we.Click();
+			
+
+	       
+			Thread.Sleep(1000);
+			we.SendKeys(Keys.Tab,Keys.ENTER);
+	//===============================================================================================================================================		
+			
+			driver.FindElement(By.XPath(".//*[@id='imgbtnConsignee']")).Click();
+
+String ConsigName = eat2.getCellData("Sheet1", "Consignee_Name", 1);
+
+
+ConsigName = ConsigName.Replace("[^a-zA-Z0-9]", " ");
+			String ConsigName_01 = ConsigName.Replace("( +)", " ").trim();
+int ConsigName_length = ConsigName_01.length();
+			if(ConsigName_length >35)
+			{
+			String limit_ConsigName = ConsigName_01.Substring(0, 35);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtConName']")).SendKeys(limit_ConsigName);
+			}
+			else
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtConName']")).SendKeys(ConsigName);	
+			}
+//=================================================================================================================================================			
+			String Remain_Addline_02 = "";
+String CAddline_01 = eat2.getCellData("Sheet1", "Address_Line01_c", 1);
+
+Thread.Sleep(1000);
+			CAddline_01 = CAddline_01.Replace("[^a-zA-Z0-9]", " ");
+			String CMAddline_01 = CAddline_01.Replace("( +)", " ").trim();
+			if(CMAddline_01=="data not found" || CMAddline_01=="" || CMAddline_01==" ")
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 1");	
+			}
+			else
+			{
+			int CAddline1_length = CMAddline_01.length();
+			if(CAddline1_length >35)
+			{
+			String limit_Addline01 = CMAddline_01.Substring(0, 35);
+Remain_Addline_02=CMAddline_01.Substring(36, CAddline1_length);
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine1']")).SendKeys(limit_Addline01);
+			}
+			else
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine1']")).SendKeys(CMAddline_01);
+			}
+			}
+//====================================================================================================================================================
+			String CAddline_02 = eat2.getCellData("Sheet1", "Address_Line02_c", 1);
+String Concate_CAddLine02;
+Thread.Sleep(1000);
+			CAddline_02 = CAddline_02.Replace("[^a-zA-Z0-9]", " ");
+			String CMAddline_02 = CAddline_02.Replace("( +)", " ").trim();
+			if(CMAddline_02=="data not found" || CMAddline_02=="" || CMAddline_02==" ")
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys("DUMMY Address line 2");	
+			}
+			else
+			{
+				if(Remain_Addline_02=="")
+				{
+					Concate_CAddLine02=CMAddline_02;
+				}
+				else
+				{
+					Concate_CAddLine02=Remain_Addline_02+CMAddline_02;
+				}
+				
+			int CAddline2_length = Concate_CAddLine02.length();
+			if(CAddline2_length >35)
+			{
+			String limit_Addline02 = Concate_CAddLine02.Substring(0, 35);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine2']")).SendKeys(limit_Addline02);
+			}
+			else
+			{
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine2']")).SendKeys(Concate_CAddLine02);
+			}
+			}			
+//===============================================================================================================================================
+			//String CountryName1=eat1.getCellData("AWBdetails", "Country_c",1);
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCountry_txtName']")).SendKeys("United Arab Emirates");
+//			
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillState_txtCode']")).SendKeys("DX");
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCity_txtCode']")).SendKeys("DXB");
+//			
+//			//String CityName1=eat2.getCellData("Sheet1", "City_c",2);
+//			//driver.FindElement(By.Id("ctl00_hldPage_uclConsAddressInfo_txtOtherCity")).SendKeys("MUMBAI");
+//			
+//			
+//			//String PinCode1=eat2.getCellData("Sheet1", "PinCode_c",2);
+//			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtPinCode']")).SendKeys("000000");
+//			Thread.Sleep(1000);
+//			
+//			IWebElement wf=driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclAlsoNotifyAddressInfo_txtPinCode']"));
+//			wf.Click();
+//			wf.SendKeys(Keys.Tab,Keys.ENTER);
+//			Thread.Sleep(1000);
+//==============================================================================================================================================
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCountry_txtName']")).SendKeys("INDIA");
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCity_txtCode']")).SendKeys("BOM");
+
+//String CityName1=eat2.getCellData("Sheet1", "City_c",2);
+//driver.FindElement(By.Id("ctl00_hldPage_uclConsAddressInfo_txtOtherCity")).SendKeys("MUMBAI");
+
+
+//String PinCode1=eat2.getCellData("Sheet1", "PinCode_c",2);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtPinCode']")).SendKeys("XXXXXX");
+Thread.Sleep(1000);
+			
+			IWebElement wf = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclAlsoNotifyAddressInfo_txtPinCode']"));
+wf.Click();
+			wf.SendKeys(Keys.Tab,Keys.Enter);
+			Thread.Sleep(1000);
+			
+			
+	//===============================================================================================================================================
+	//Issuing Carrier's Agent Name and City
+			String IssuAgent = eat2.getCellData("Sheet1", "Agent", 1);
+
+IWebElement agnt = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAgentSelect']"));
+//			if(IssuAgent.Equals("data not found") && IssuAgent.Equals("  "))
+//			{
+			if(OrganizationName.EqualsIgnoreCase("TIFFA AWB Service"))
+			{
+				IssuAgent="KALE LOGISTICS";
+			}
+			else
+			{
+			IssuAgent=OrganizationName;
+			}
+				//IssuAgent="EAGLES AIR AND SEA (THAILAND) CO., LTD";
+
+
+				
+		//	}
+			//String AgentConcate= IssuAgent.Substring(0, IssuAgent.indexOf("."));
+			
+			agnt.SendKeys(IssuAgent);
+			Thread.Sleep(2000);
+			agnt.SendKeys(Keys.CONTROL+"A");
+			Thread.Sleep(2000);
+			agnt.SendKeys(Keys.ARROW_DOWN);
+			Thread.Sleep(1000);
+			agnt.SendKeys(Keys.Tab);
+			Thread.Sleep(1000);
+			
+			
+			String AccountInformatiom = eat2.getCellData("Sheet1", "Accounting_Information", 1);
+AccountInformatiom = AccountInformatiom.Replace("[^a-zA-Z0-9]", " ");
+			String AccountInformatiom_01 = AccountInformatiom.Replace("( +)", " ").trim();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_accountinginfo']")).SendKeys(AccountInformatiom_01);
+//================================================================================================================================
+//flight details
+String Carrier_code_01 = null, Airline_Date_01, Airline_Date_001, Flight_Number_01 = null, Current_Date, Flight_date01 = null, Carrier_code_02 = null, Airline_Date_02 = null, Airline_Date_002, Flight_Number_02 = null, Flight_date02 = null, Carrier_code_03 = null, Airline_Date_03 = null, Airline_Date_003, Flight_Number_03 = null, Flight_date03 = null;
+String[] Array_flightdetails_01, Array_flightdetails_02, Array_flightdetails_03;
+Current_Date=new SimpleDateFormat("/MM/yyyy").format(Calendar.getInstance().getTime());
+					 
+					 String OriPort = eat2.getCellData("Sheet1", "Origin_Port", 1);
+String OriPort_01 = OriPort.Replace("( +)", " ").trim();
+					 
+					 if(OriPort_01=="" ||  OriPort=="data not found")
+					 {
+						 OriPort_01="data not found"; 
+					 }
+					 
+					 if(OriPort_01.Equals("SUVARNABHUMI AIRPORT , THAILAND"))
+					 {
+						 OriPort_01="BKK";
+					 }
+					 else if(OriPort_01.Equals("BANGKOK/THAILAND"))
+					 {
+						 OriPort_01="BKK";
+					 }
+					 else if(OriPort_01.Equals("BANGKOK,THAILAND"))
+					 {
+						 OriPort_01="BKK";
+					 }
+					 else if(OriPort_01.Equals("SUVARNABHUMI AIRPORT"))
+					 {
+						 OriPort_01="BKK";
+					 }
+					 else if(OriPort_01.Equals("DON MUEANG AIRPORT, THAILAND"))
+					 {
+						 OriPort_01="DMK";
+					 }
+					 else if(OriPort_01.Equals("DON MUEANG AIRPORT"))
+					 {
+						 OriPort_01="DMK";
+					 }
+					 
+					String Via1 = eat2.getCellData("Sheet1", "Via01", 1);
+String Via1_01 = Via1.Replace("( +)", " ").trim();
+					if(Via1_01=="" || Via1=="data not found")
+					 {
+						Via1_01="data not found"; 
+					 }
+					
+					String Via2 = eat2.getCellData("Sheet1", "Via02", 1);
+String Via2_01 = Via2.Replace("( +)", " ").trim();
+					
+					if(Via2_01=="" || Via2=="data not found")
+					 {
+						Via2_01="data not found"; 
+					 }
+					
+					String DestPort = eat2.getCellData("Sheet1", "Destn_Port", 1);
+String DestPort_01 = DestPort.Replace("( +)", " ").trim();
+					if(DestPort_01.contentEquals("") || DestPort.contentEquals("data not found"))
+					 {
+						DestPort_01="data not found"; 
+					 }
+					
+			
+					String Flight_Details_01 = eat2.getCellData("Sheet1", "Flight_Details_01", 1);
+String Flight_Details_02 = eat2.getCellData("Sheet1", "Flight_Details_02", 1);
+String Flight_Details_03 = eat2.getCellData("Sheet1", "Flight_Details_03", 1);
+					
+
+					if(IssuAgent=="KALE LOGISTICS")
+					{
+						Flight_Details_01="9W";
+						Flight_Details_02="9W1922/26";
+						Flight_Details_03="data not found";
+					}
+					int lenght_fli_det_01 = Flight_Details_01.length();
+					if(lenght_fli_det_01<=4)
+					{
+						Flight_Details_01="data not found";
+					}
+					
+					
+					if(DestPort_01=="data not found")
+					{
+						Flight_Details_01=Flight_Details_02;
+						Flight_Details_02=Flight_Details_03;
+					}
+					else if(Via2=="data not found")
+					{
+						Flight_Details_01=Flight_Details_02;
+					}
+					
+					if(Flight_Details_03 !="data not found")
+					{				
+						Array_flightdetails_01  = Flight_Details_01.Split("/");
+						 Carrier_code_01=Flight_Details_01.Substring(0,2);
+						 Airline_Date_001=Array_flightdetails_01[1];
+						 Airline_Date_01=Airline_Date_001.Substring(0,2);
+						 Flight_Number_01=Array_flightdetails_01[0].Substring(2);
+Current_Date=new SimpleDateFormat("/MM/yyyy").format(Calendar.getInstance().getTime());
+						 Flight_date01=Airline_Date_01+Current_Date;
+					 
+						 Array_flightdetails_02  = Flight_Details_02.Split("/");
+						 Carrier_code_02=Flight_Details_02.Substring(0,2);
+						 Airline_Date_002=Array_flightdetails_02[1];
+						 Airline_Date_02=Airline_Date_002.Substring(0,2);
+						 Flight_Number_02=Array_flightdetails_02[0].Substring(2);
+Flight_date02=Airline_Date_02+Current_Date;
+					
+						 Array_flightdetails_03  = Flight_Details_03.Split("/");
+						 Carrier_code_03=Flight_Details_03.Substring(0,2);
+						 Airline_Date_003=Array_flightdetails_03[1];
+						 Airline_Date_03=Airline_Date_003.Substring(0,2);
+						 Flight_Number_03=Array_flightdetails_03[0].Substring(2);
+Flight_date03=Airline_Date_03+Current_Date;
+					}
+
+					else if(Flight_Details_02 !="data not found")
+					{
+							Array_flightdetails_01  = Flight_Details_01.Split("/");
+							Carrier_code_01=Flight_Details_01.Substring(0,2);
+							Airline_Date_001=Array_flightdetails_01[1];
+							Airline_Date_01=Airline_Date_001.Substring(0,2);
+							Flight_Number_01=Array_flightdetails_01[0].Substring(2);
+Current_Date=new SimpleDateFormat("/MM/yyyy").format(Calendar.getInstance().getTime());
+							Flight_date01=Airline_Date_01+Current_Date;
+						 
+							Array_flightdetails_02  = Flight_Details_02.Split("/");
+							Carrier_code_02=Flight_Details_02.Substring(0,2);
+							Airline_Date_002=Array_flightdetails_02[1];
+							Airline_Date_02=Airline_Date_002.Substring(0,2);
+							Flight_Number_02=Array_flightdetails_02[0].Substring(2);
+Flight_date02=Airline_Date_02+Current_Date;
+					}
+					else if(Flight_Details_01 !="data not found")
+					{
+							Array_flightdetails_01  = Flight_Details_01.Split("/");
+							Carrier_code_01=Flight_Details_01.Substring(0,2);
+							Airline_Date_001=Array_flightdetails_01[1];
+							Airline_Date_01=Airline_Date_001.Substring(0,2);
+							Flight_Number_01=Array_flightdetails_01[0].Substring(2);
+Current_Date=new SimpleDateFormat("/MM/yyyy").format(Calendar.getInstance().getTime());
+							Flight_date01=Airline_Date_01+Current_Date;
+					}
+					
+	//================================================================================================================================
+	//Routing details		
+					String Current_Date_for_defaultflight = new SimpleDateFormat("dd").format(Calendar.getInstance().getTime());
+driver.FindElement(By.XPath(".//*[@id='imgairport']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillOriginAirport_txtCode']")).SendKeys(OriPort_01);
+					
+					if(DestPort_01!="data not found")
+					{
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(DestPort_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute1_txtCode']")).SendKeys(Via1_01);
+IWebElement btn_via2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtCode']"));
+btn_via2.SendKeys(Via2_01);
+						btn_via2.SendKeys(Keys.Tab);
+						Thread.Sleep(1000);
+						driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+Thread.Sleep(1000);
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier1']")).SendKeys(Carrier_code_01);
+						if(Flight_Number_01=="data not found")
+						{
+							driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys("123");
+						}
+						else
+						{
+							driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys(Flight_Number_01);
+						}
+						
+						if(Flight_date01=="data not found")
+						{
+							driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Current_Date_for_defaultflight);
+						}
+						else
+						{
+							driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Flight_date01);
+						}
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier2']")).SendKeys(Carrier_code_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno2']")).SendKeys(Flight_Number_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate2']")).SendKeys(Flight_date02);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier3']")).SendKeys(Carrier_code_03);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno3']")).SendKeys(Flight_Number_03);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate3']")).SendKeys(Flight_date03);
+					}	
+					else if(Via2_01!="data not found")
+					{	
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(Via2_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute1_txtCode']")).SendKeys(Via1_01);
+driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier1']")).SendKeys(Carrier_code_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys(Flight_Number_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Flight_date01);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier2']")).SendKeys(Carrier_code_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno2']")).SendKeys(Flight_Number_02);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate2']")).SendKeys(Flight_date02);
+					}
+					else
+					{
+						driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(Via1);
+driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[8]/div[11]/button[1]")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCarrier1']")).SendKeys(Carrier_code_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys(Flight_Number_01);
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(Flight_date01);
+					}
+//==================================================================================================================================================
+	//Handling Information
+					String Handling_Information = eat2.getCellData("Sheet1", "Handling_Information", 1);
+Handling_Information = Handling_Information.Replace("[^a-zA-Z0-9]", " ");
+						String Handling_Information_01 = Handling_Information.Replace("( +)", " ").trim();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtssr']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtssr']")).SendKeys(Handling_Information_01);
+
+
+
+//===================================================================================================================
+//charge code
+//	String ChargeCode=eat2.getCellData("Sheet1", "Charge_code",1);
+String ChargeCode_01 = "PX";
+
+IWebElement cc = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ddlChargeCode']"));
+cc.Click();
+                                                            SelectElement cc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ddlChargeCode']")));
+cc1.SelectByText(ChargeCode_01);
+	//============================================================================================================================================
+					
+					driver.FindElement(By.XPath(".//*[@id='addDimensions_1']")).Click();
+
+String Numberpieces = eat2.getCellData("Sheet1", "No_pcs", 1);
+					if(Numberpieces=="data not found")
+					{
+						driver.FindElement(By.XPath(".//*[@id='txtNoPcs_1']")).SendKeys("1");
+					}
+					else
+					{
+						String Numberpieces_01 = Numberpieces.Substring(0, Numberpieces.indexOf("."));
+driver.FindElement(By.XPath(".//*[@id='txtNoPcs_1']")).SendKeys(Numberpieces_01);
+					}
+					
+					String length = eat1.getCellData("AWBdetails", "Length", 1);
+driver.FindElement(By.XPath(".//*[@id='txtLength_1']")).SendKeys(length);
+
+String width = eat1.getCellData("AWBdetails", "Width", 1);
+driver.FindElement(By.XPath(".//*[@id='txtWidth_1']")).SendKeys(width);
+
+String hieght = eat1.getCellData("AWBdetails", "Height", 1);
+driver.FindElement(By.XPath(".//*[@id='txtHeight_1']")).SendKeys(hieght);
+
+//driver.FindElement(By.XPath(".//*[@id='addrow_1']")).Click();
+
+IWebElement slac = driver.FindElement(By.XPath(".//*[@id='txtDmnSlac_1']"));
+slac.Click();
+					slac.SendKeys(Keys.Tab,Keys.Tab,Keys.ENTER);
+			
+			
+			String GrossWeight = eat2.getCellData("Sheet1", "Gross_Wt", 1);
+			if(GrossWeight=="data not found")
+			{
+				driver.FindElement(By.XPath(".//*[@id='txtCgGrWt_1']")).SendKeys("1");
+			}
+			else
+			{
+				driver.FindElement(By.XPath(".//*[@id='txtCgGrWt_1']")).SendKeys(GrossWeight);
+			}
+			
+			
+              			String RateClass = eat2.getCellData("Sheet1", "Rate_Class", 1);
+String RateClass_01 = RateClass.Replace("( +)", " ").trim();
+			if(RateClass_01.Contains(""))
+			{
+				RateClass_01="data not found";
+			}
+			
+			if(RateClass_01=="data not found")
+			{
+                                                                SelectElement rc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='selRateClass_1']")));
+rc1.SelectByText("Q");
+			}
+			else
+			{
+                                                                SelectElement rc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='selRateClass_1']")));
+rc1.SelectByText(RateClass_01);
+			}
+			
+			String ComdityNo = eat2.getCellData("Sheet1", "Commodity_No", 1);
+String ComdityNo_01 = ComdityNo.Replace("( +)", " ").trim();
+			if(ComdityNo_01==" ")
+			{
+				ComdityNo_01="data not found";
+			}
+			if(RateClass_01.Contains("C") || RateClass_01.Contains("S")) 
+			{
+				if(ComdityNo_01=="data not found")
+				{
+					driver.FindElement(By.XPath(".//*[@id='txtCommNo_1']")).SendKeys("111");
+				}
+				else
+				{
+					driver.FindElement(By.XPath(".//*[@id='txtCommNo_1']")).SendKeys(ComdityNo_01);
+				}
+			}
+			
+			String Charge = eat2.getCellData("Sheet1", "Charges", 1);
+String Charge_01 = Charge.Replace("( +)", " ").trim();
+			if(Charge_01.contentEquals("data not found") || Charge_01.contentEquals(""))
+			{
+				driver.FindElement(By.XPath(".//*[@id='txtCgRate_1']")).SendKeys("1");	
+			}
+			else
+			{
+			driver.FindElement(By.XPath(".//*[@id='txtCgRate_1']")).SendKeys(Charge_01);
+Thread.Sleep(1000);
+			}
+             String nature = eat2.getCellData("Sheet1", "Nature", 1);
+Thread.Sleep(1000);
+			nature = nature.Replace("[^a-zA-Z0-9]", " ");
+			String nature_01 = nature.Replace("( +)", " ").trim();
+driver.FindElement(By.XPath(".//*[@id='txtCgDesc_1']")).SendKeys(nature_01);
+Thread.Sleep(1000);
+			IWebElement tcc = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSaveAwb']"));
+tcc.Click();
+			Thread.Sleep(10000);
+			
+			Sc=eat1.screenShot(driver);
+			excelsave_path=Sc;
+//==============================================================================================================================
+			endtime1 = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
+	        EndTime=endtime1; 
+		
+	        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+Date date1 = format.parse(StartTime);
+Date date2 = format.parse(EndTime);
+
+diff = date2.getTime() - date1.getTime();
+	        
+            Duration=String.format("%02d", diff / hour)+":"+String.format("%02d", (diff % hour) / minute)+":"+String.format("%02d", (diff % minute) / second);
+        						
+//==============================================================================================================================		
+			result3=eat1.isElementPresent(driver,".//*[@id='ctl00_hldPage_lblMessage2']");
+			Thread.Sleep(3000);
+			if(result3== false)
+			{
+				driver.Close();
+				driver.SwitchTo().Window(Tabs2.get(0));
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                                SelectElement status0201 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0201.SelectByText("Yet To Start");
+	    		Thread.Sleep(3000);
+	    		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+
+	    	      
+	    		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtOperator']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtAssignedTo']")).Clear();
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkSave']")).Click();
+Thread.Sleep(5000);
+	    		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(2000);
+	    		 driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                                                                SelectElement yts0201 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0201.SelectByText("Yet To Start"); 
+	    			i1=2;
+	    		//	wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, excelsave_path);
+			}
+			else
+			{
+				DR.read_write_D(AWBNumber, OrganizationName,DraftUpload_time,StartTime,EndTime,Duration,1, Reportsave_path);
+				driver.Close();
+				driver.SwitchTo().Window(Tabs2.get(0));
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                                SelectElement status0102 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0102.SelectByText("Draft Saved");
+	    		Thread.Sleep(1000);
+	    		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+	    		
+	    	    driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+
+                                                                SelectElement yts0202 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0202.SelectByText("Yet To Start");  
+	    		Console.WriteLine("Airway Bill Created successfully");
+long end = System.currentTimeMillis();
+//NumberFormat formatter = new DecimalFormat("#0.00");
+Console.WriteLine(i1+".Execution time for AWB No. "+AWB_Number+"is " + formatter.format((end - start) / 1000d) + " seconds");  
+	    		
+	    		//wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, excelsave_path);
+			}
+			}
+			else//shipper name not found
+			{
+				driver.Close();
+				driver.SwitchTo().Window(Tabs2.get(0));
+				driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                            SelectElement status0101 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0101.SelectByText("Yet To Start");
+	    		Thread.Sleep(3000);
+	    		driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+
+	    	      
+	        	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtOperator']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtAssignedTo']")).Clear();
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkSave']")).Click();
+Thread.Sleep(5000);
+	    		driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(2000);
+	    		 driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                                                            SelectElement yts0101 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0101.SelectByText("Yet To Start");        
+	    			i1=2;
+			}
+
+			}
+			
+	    
+	    else
+	    {
+	    	Path temp1 = Files.move
+                     (Paths.get(Source_folder_path + renamefile1),
+                     Paths.get(Proccess_fail_folder_path + renamefile1));
+	     	 
+	     	        if(temp1 != null)
+	     	        {
+	     	           
+	     	        }
+	     	        else
+	     	        {
+	     	            Console.WriteLine("Failed to move the file");
+	     	        }
+	     	driver.SwitchTo().DefaultContent();
+Thread.Sleep(3000);
+	    	IWebElement Close = driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[6]/div[11]/button"));
+Thread.Sleep(3000);
+			Close.Click();
+
+			
+			 ArrayList<String> Tabs2 = new ArrayList<String>(driver.getWindowHandles());
+
+driver.SwitchTo().Window(Tabs2.get(1));
+		   	Thread.Sleep(3000);
+		   	driver.FindElement(By.XPath(".//*[@id='ctl00_lnkSignout']")).Click();
+driver.Close();
+		    
+		   	driver.SwitchTo().Window(Tabs2.get(0));
+		   
+		   	driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(onlyAWB);
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnSearchAWB']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")).Click();
+                                                        SelectElement status0204 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_drpLinks']")));
+status0204.SelectByText("Yet To Start");
+			Thread.Sleep(1000);
+			driver.SwitchTo().Alert().Accept();
+Thread.Sleep(1000);
+
+		      
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtOperator']")).Clear();
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_txtAssignedTo']")).Clear();
+
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_grdAWBTrack_ctl02_lnkSave']")).Click();
+Thread.Sleep(3000);
+			driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnCloseDialog']")).Click();
+Thread.Sleep(2000);
+		    driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_btnLoadAll']")).Click();
+
+driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")).Click();              // Click Dropdown 
+                                                        SelectElement yts0204 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_drpStatus']")));
+yts0204.SelectByText("Yet To Start");        
+	    }
+	     	}  
+	     
+	                		}
+						                else
+						                	{
+						            			i1++;
+						                	}
+	            			}
+							            else
+							        		{
+							            		i1++;
+							        		}
+							}
+								        else
+								        	{
+								        		i1++;
+								        	}
+	        	 			}
+							        	else
+								        	{
+								        		i1++;
+								        	}
+	        	 			}
+							        	else
+							        		{
+							        			i1++;
+							        		}
+//	        	 			}
+//							        	else
+//							        		{
+//							        			i1++;
+//							        		}
+	        					
+	    
+	        }
+	        }
+				Console.WriteLine("There is no such Drafts present");
+Thread.Sleep(5000);
+				driver.FindElement(By.XPath(".//*[@id='ctl00_lnkSignout']")).Click();
+Thread.Sleep(5000);
+				driver.Close();
+				driver.quit();
+			//	wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, excelsave_path);
+		}
+		else
+		{
+		Console.WriteLine("Execution is successfully completed");
+Thread.Sleep(3000);
+		driver.FindElement(By.XPath(".//*[@id='ctl00_lnkSignout']")).Click();
+Thread.Sleep(5000);
+		driver.Close();
+		driver.quit();
+		}
+		}
+		catch(Exception e)
+		{
+		Console.WriteLine(e.getMessage());
+		String reason = e.getMessage();
+Mail mai = new Mail();
+Status="Fail";
+		
+		String ExcelPath = "E:\\Tiffa_Project\\TestExecution\\Test_ExecutionREPORT.xls";
+mai.SendMail(AWB_Number, Status,ExcelPath,reason);
+       wx.read_write(Srno, AWB_Number, Agent_Name, starttime1, endtime1, Duration, Status, Reason, ScreenShotPath, rono, excelsave_path);
+		}
+	}
+		
+	private static void listFilesForFolder(File fileEntry)
+{
+
+}
+
+	
+
+
+    }
+}

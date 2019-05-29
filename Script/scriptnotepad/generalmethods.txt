@@ -1,0 +1,213 @@
+using OpenQA.Selenium;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.OleDb;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PingAutomation
+{
+    class GeneralMethods
+    {
+        Hashtable myHashtable;
+        #region To read excel data
+        public DataSet ImportexcelData(string FilePath,string ClientName)
+        {
+
+            OleDbConnection dbConnection = new System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + FilePath + ";Extended Properties=\"Excel 12.0 xml;IMEX=1\";");
+            dbConnection.Open();
+
+            DataSet ds = new DataSet("Data");
+            String sql = "Select * from [Sheet1$] where Agent_Name ='" + ClientName + "'";
+            OleDbCommand dbCommand = new System.Data.OleDb.OleDbCommand(sql, dbConnection);
+            OleDbDataAdapter dbAdapter = new OleDbDataAdapter(dbCommand);
+
+            DataTable dt = new DataTable("Sheet1");
+            dbAdapter.Fill(dt);
+            ds.Tables.Add(dt);
+
+            dbConnection.Close();
+            dbConnection.Dispose();
+
+            //  CheckExcellProcesses();
+            //  KillExcel();
+
+            return ds;
+        }
+        #endregion
+
+        #region To get list from tracker
+        public DataSet isPresentontracker()
+        {
+            // int resquery = 0;
+
+            string connString = "Provider=Microsoft.ACE.OLEDB.12.0;WSS;IMEX=2;RetrieveIds=Yes; DATABASE=http://klsstg03/pingSD/;LIST={5D0E59F0-E498-4EF0-BBC1-C2FCF7C9150F};VIEW={87B39BBA-9465-4B2E-87D1-FE88E735EEA6};";
+            //string connString = "Provider=Microsoft.ACE.OLEDB.12.0;WSS;IMEX=0;RetrieveIds=Yes; DATABASE=http://klsstg03/pingSD/TIFFA-Kale/;LIST={27F0E118-ABC1-4D38-8FFD-2CB0C9F492D8};VIEW={E22AF388-5263-42B8-BB85-DE8B79BF6F61};";
+
+            OleDbConnection conn = new OleDbConnection(connString);
+            conn.Open();
+            DataSet dsPingMe = new DataSet();
+
+            // OdbcCommand command = new OdbcCommand("select * from Branch", conn);
+            String h = "Hawb Count";                                                                                                
+           OleDbCommand commandPingMe = new OleDbCommand("select * from LIST where Shipment_Status = '2 - Ack' AND `Hawb Count`=0", conn);
+            //  OleDbCommand commandPingMe = new OleDbCommand("select Count(*)  from LIST where Pfx = '" + AirlinePfx + "' AND AWB_No = '" + MawbNo + "'", conn);
+           // OleDbCommand commandPingMe = new OleDbCommand("select * from LIST", conn);
+            OleDbDataAdapter dataAdapterPingMe = new OleDbDataAdapter(commandPingMe);
+            DataTable dtPingMe = new DataTable();
+            dataAdapterPingMe.Fill(dtPingMe);
+            dsPingMe.Tables.Add(dtPingMe);
+            //return Convert.ToInt32(commandPingMe.ExecuteScalar());
+            //resquery = dsPingMe.Tables["Table1"].Rows.Count; 
+            //return resquery;
+
+            return dsPingMe;
+        }
+        #endregion
+
+        public DataSet ImportexcelData1(string FilePath)
+        {
+           
+                OleDbConnection dbConnection = new System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + FilePath + ";Extended Properties=\"Excel 12.0 xml;IMEX=1\";");
+                dbConnection.Open();
+
+                DataSet ds = new DataSet("Data");
+                String sql = "Select * from [Sheet1$]";
+                OleDbCommand dbCommand = new System.Data.OleDb.OleDbCommand(sql, dbConnection);
+                OleDbDataAdapter dbAdapter = new OleDbDataAdapter(dbCommand);
+
+                DataTable dt = new DataTable("Sheet1");
+                dbAdapter.Fill(dt);
+                ds.Tables.Add(dt);
+
+                dbConnection.Close();
+                dbConnection.Dispose();
+
+                //  CheckExcellProcesses();
+                //  KillExcel();
+
+                return ds;
+        }
+        
+        public void CheckExcellProcesses()
+        {
+            Process[] AllProcesses = Process.GetProcessesByName("excel");
+            myHashtable = new Hashtable();
+            int iCount = 0;
+
+            foreach (Process ExcelProcess in AllProcesses)
+            {
+                myHashtable.Add(ExcelProcess.Id, iCount);
+                iCount = iCount + 1;
+            }
+        }
+
+        public void KillExcel()
+        {
+            Process[] AllProcesses = Process.GetProcessesByName("excel");
+
+            // check to kill the right process
+            foreach (Process ExcelProcess in AllProcesses)
+            {
+                if (myHashtable.ContainsKey(ExcelProcess.Id) == true)
+                    ExcelProcess.Kill();
+            }
+
+            AllProcesses = null;
+        }
+
+        #region Find Element xpath
+
+        public bool TryFindElement(IWebDriver driver, string element1)
+        {
+            try
+            {
+                IWebElement element = driver.FindElement(By.XPath("" + element1 + ""));
+
+                if (true)
+                {
+                    bool visible = IsElementVisible(element);
+
+                    if (visible == true)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                //return true;
+            }
+            catch (NoSuchElementException ex)
+            {
+                return false;
+                throw ex;
+            }
+
+        }
+
+        public bool IsElementVisible(IWebElement element)
+        {
+            return element.Displayed && element.Enabled;
+        }
+
+
+        #endregion
+
+        public void UpdatePingStatus(string AirlinePrefix, string MAWBNumber, StreamWriter strWriter)
+        {
+            try
+            {
+
+                System.Data.OleDb.OleDbConnection MyConnection;
+                System.Data.OleDb.OleDbCommand myCommand = new System.Data.OleDb.OleDbCommand();
+
+                MyConnection = new System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;WSS;IMEX=2;RetrieveIds=Yes; DATABASE=http://klsstg03/pingSD/;LIST={5D0E59F0-E498-4EF0-BBC1-C2FCF7C9150F};VIEW={87B39BBA-9465-4B2E-87D1-FE88E735EEA6};");
+                MyConnection.Open();
+
+                myCommand.Connection = MyConnection;
+
+                string DateStamp = System.DateTime.Now.ToString("dd/MM/yyyy H:mm");
+                string sql = "Update [Table1] set Shipment_Status='4 - Updated in PING' where Pfx='" + AirlinePrefix + "' AND AWB_No='" + MAWBNumber + "' AND Shipment_Status='2 - Ack'";
+                //, PDF_Sent_At = '" +DateStamp + "'
+                myCommand.CommandText = sql;
+                myCommand.ExecuteNonQuery();
+                sql = "";
+                MyConnection.Close();
+                MyConnection.Dispose();
+                Console.WriteLine("Status updated successfully for AWB " + MAWBNumber + ".\n");
+
+                Console.WriteLine("Status updated successfully for AWB " + MAWBNumber + ".\n");
+
+                strWriter.WriteLine(AirlinePrefix+"-"+MAWBNumber + " status Updated successfully as '4 - Updated in PING'");
+                strWriter.WriteLine(" ");
+                strWriter.WriteLine("-------------------------------------------------------");
+                strWriter.WriteLine(" ");
+
+                if (MyConnection.State == ConnectionState.Open)
+                {
+                    MyConnection.Close();
+                    MyConnection.Dispose();
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                strWriter.WriteLine(MAWBNumber + " could not be Updated   " + ex.Message);
+                strWriter.WriteLine(" ");
+                strWriter.WriteLine("-------------------------------------------------------");
+                strWriter.WriteLine(" ");
+
+            }
+        }
+    }
+}

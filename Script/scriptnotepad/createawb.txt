@@ -1,0 +1,438 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace PingAutomation
+{
+    class create
+    {
+        public static void main()
+        {
+            StreamWriter strWriter;
+                 FileStream files;
+            String FileName = ConfigurationManager.AppSettings["LogfilePath"] + @"\PingAutomation" + DateTime.Now.ToString("dd-MMM-yyyy") + ".txt";
+            files = new FileStream(FileName, FileMode.Append, FileAccess.Write, FileShare.None);
+            strWriter = new StreamWriter(files);
+            strWriter.WriteLine("---------------------------------------------------------------");
+            strWriter.WriteLine("Log generated at " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm"));
+            strWriter.WriteLine(" ");
+            create c = new create();
+            c.createawb(@"E:\JITESH\PingAutomation\Output_File\20190114_123638.xls", "MAGNUM CARGO PVT. LTD","020","",strWriter);
+        }
+        
+        public void createawb(string filename,string clientname,string Prefix,string awbno, StreamWriter strWriter)
+        {
+            #region Webdriver initialization and login
+        
+            bool result = false;
+
+            IWebDriver driver = new ChromeDriver();
+           string url = ConfigurationManager.AppSettings["PingURL"].ToString();
+            string username = ConfigurationManager.AppSettings["Username"].ToString();
+            string password = ConfigurationManager.AppSettings["Password"].ToString();
+            driver.Url=url;
+            driver.FindElement(By.Id("txtUsrName")).SendKeys(username);
+            driver.FindElement(By.Id("txtPswd")).SendKeys(password);
+            driver.FindElement(By.Id("btnLogin")).Click();
+            driver.Manage().Window.Maximize();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='ctl00_lnkSignout']"))));
+            Thread.Sleep(1000);
+            driver.FindElement(By.XPath("//a[contains(text(),'AWB Service')]")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath("//a[contains(text(),'PING - Create MAWB')]"))));
+            Thread.Sleep(1000);
+            driver.FindElement(By.XPath("//a[contains(text(),'PING - Create MAWB')]")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='ctl00_hldPage_drpCopyFrom']"))));
+            Thread.Sleep(1000);
+
+            #endregion
+
+            #region String read from excel
+            GeneralMethods PTEGE = new GeneralMethods();
+            DataSet d = new DataSet();
+            
+            string excelpath = filename;
+            d = PTEGE.ImportexcelData1(filename);
+
+            string 
+              actual01 = null,
+              actual02 = null,
+              Shipper_Name = null,
+              Address_Line01 = null,
+              Address_Line02 = null,
+              Consignee_Name = null,
+              Address_Line01_c = null,
+              Address_Line02_c = null,
+              Agent = null,
+              Accounting_Information = null,
+              Origin_Port = null,
+              Destn_Port = null,
+              Via01 = null,
+              Via02 = null,
+              Charge_code = null,
+              Flight_Details_01 = null,
+              Flight_Date_01 = null,
+              Flight_Details_02 = null,
+              Flight_Date_02 = null,
+              Handling_Information = null,
+              No_pcs = null,
+              Gross_Wt = null,
+              Rate_Class = null,
+              Charges = null,
+              Commodity_No = null,
+              Nature = null;
+
+
+
+            // Prefix = d.Tables["Sheet1"].Rows[0]["pre"].ToString();
+     
+            actual01 = d.Tables["Sheet1"].Rows[0]["actual01"].ToString();
+              actual02 = d.Tables["Sheet1"].Rows[0]["actual02"].ToString();
+              Shipper_Name = d.Tables["Sheet1"].Rows[0]["Shipper_Name"].ToString();
+              Address_Line01 = d.Tables["Sheet1"].Rows[0]["Address_Line01"].ToString();
+              Address_Line02 = d.Tables["Sheet1"].Rows[0]["Address_Line02"].ToString();
+              Consignee_Name = d.Tables["Sheet1"].Rows[0]["Consignee_Name"].ToString();
+              Address_Line01_c = d.Tables["Sheet1"].Rows[0]["Address_Line01_c"].ToString();
+              Address_Line02_c = d.Tables["Sheet1"].Rows[0]["Address_Line02_c"].ToString();
+              Agent = d.Tables["Sheet1"].Rows[0]["Agent"].ToString();
+              Accounting_Information = d.Tables["Sheet1"].Rows[0]["Accounting_Information"].ToString();
+              Origin_Port = d.Tables["Sheet1"].Rows[0]["Origin_Port"].ToString();            
+                Destn_Port = d.Tables["Sheet1"].Rows[0]["Destn_Port"].ToString();                   
+            Via01 = d.Tables["Sheet1"].Rows[0]["Via01"].ToString();
+            Via02 = d.Tables["Sheet1"].Rows[0]["Via02"].ToString();          
+              Charge_code = d.Tables["Sheet1"].Rows[0]["Charge_code"].ToString();
+              Flight_Details_01 = d.Tables["Sheet1"].Rows[0]["Flight_Details_01"].ToString();
+              Flight_Date_01 = d.Tables["Sheet1"].Rows[0]["Flight_Date_01"].ToString();
+            if (d.Tables.Contains("Flight_Details_02"))
+            {
+                Flight_Details_02 = d.Tables["Sheet1"].Rows[0]["Flight_Details_02"].ToString();
+                Flight_Date_02 = d.Tables["Sheet1"].Rows[0]["Flight_Date_02"].ToString();
+            }       
+              Handling_Information = d.Tables["Sheet1"].Rows[0]["Handling_Information"].ToString();
+              No_pcs = d.Tables["Sheet1"].Rows[0]["No_pcs"].ToString();
+              Gross_Wt = d.Tables["Sheet1"].Rows[0]["Gross_Wt"].ToString();
+              Rate_Class = d.Tables["Sheet1"].Rows[0]["Rate_Class"].ToString();
+              Charges = d.Tables["Sheet1"].Rows[0]["Charges"].ToString();
+              Commodity_No = d.Tables["Sheet1"].Rows[0]["Commodity_No"].ToString();
+              Nature = d.Tables["Sheet1"].Rows[0]["Nature"].ToString();
+            #endregion
+
+            #region code for create awb
+
+            IWebElement awbpre = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBPrefix']"));
+            awbpre.SendKeys(Prefix);
+            Thread.Sleep(500);
+            awbpre.SendKeys(Keys.Control+"a");
+            Thread.Sleep(500);
+            awbpre.SendKeys(Keys.Tab);
+            Thread.Sleep(500);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAWBNo']")).SendKeys(awbno);
+            driver.FindElement(By.XPath(".//*[@id='btnshipperadd']")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='ctl00_hldPage_txtOrgName']"))));
+            Thread.Sleep(300);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtOrgName']")).SendKeys(Shipper_Name);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtCompanyName']")).SendKeys(Shipper_Name);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine1']")).SendKeys(Address_Line01);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtAddressLine2']")).SendKeys(Address_Line02);
+            IWebElement cntname = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_GenericAutoFillCountry_txtName']"));
+            cntname.SendKeys("India");
+            cntname.SendKeys(Keys.Control + "a");
+            cntname.SendKeys(Keys.Tab);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtOtherCity']")).SendKeys("MUM");
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtPinCode']")).SendKeys("xxxxxx");
+            IWebElement uld1 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclOrgAddressInformation_txtPinCode']"));
+            uld1.Click();
+            uld1.SendKeys(Keys.Tab+Keys.Enter);
+                      
+             
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='imgbtnConsignee']"))));
+            Thread.Sleep(300);
+            driver.FindElement(By.XPath(".//*[@id='imgbtnConsignee']")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='ctl00_hldPage_txtSearchConsigneeName']"))));
+            Thread.Sleep(300);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtSearchConsigneeName']")).SendKeys(Consignee_Name);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtConName']")).SendKeys(Consignee_Name);
+
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine1']")).SendKeys(Address_Line01_c);
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtAddressLine2']")).SendKeys(Address_Line02_c);
+
+            IWebElement cons = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCountry_txtName']"));
+            cons.SendKeys("germany");
+            cons.SendKeys(Keys.Control + "a");
+            cons.SendKeys(Keys.ArrowDown);
+            cons.SendKeys(Keys.Tab);
+
+            IWebElement conscity = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_GenericAutoFillCity_txtName']"));
+            conscity.SendKeys("Frankfurt");
+            conscity.SendKeys(Keys.Control + "a");
+            conscity.SendKeys(Keys.ArrowDown);
+            conscity.SendKeys(Keys.Tab);
+          
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclConsAddressInfo_txtPinCode']")).SendKeys("xxxxxx");
+            IWebElement uld = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_uclAlsoNotifyAddressInfo_txtPinCode']"));
+            uld.Click();
+            uld.SendKeys(Keys.Tab+Keys.Enter);
+          
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='ctl00_hldPage_txtAgentSelect']"))));
+            Thread.Sleep(300);
+
+            IWebElement txtAgentSelect = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtAgentSelect']"));
+            txtAgentSelect.SendKeys(clientname);
+            txtAgentSelect.SendKeys(Keys.Control + "a");
+            Thread.Sleep(3000);
+            txtAgentSelect.SendKeys(Keys.ArrowDown);
+            txtAgentSelect.SendKeys(Keys.Tab);
+
+            string Accounting_Information_01 = Accounting_Information.Replace("( +)", " ").Trim();
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_accountinginfo']")).SendKeys(Accounting_Information_01);
+
+            //   declare string as null
+
+            string Via1 = null;
+                 Via1 = Via01;
+                string Via1_01 = Via1.Replace("( +)", " ").Trim();
+                if (Via1_01 == "" || Via1 == "null")
+                {
+                    Via1_01 = "null";
+                }
+
+            string Via2 = null;
+            Via2 = Via02;
+            string Via2_01 = Via2.Replace("( +)", " ").Trim();
+
+            if (Via2_01 == "" || Via2 == "null")
+            {
+                Via2_01 = "null";
+            }
+
+            string DestPort = null;
+              DestPort = Destn_Port;
+            string DestPort_01 = DestPort.Replace("( +)", " ").Trim();
+            if (DestPort_01 == ("") || DestPort == "null")
+            {
+                DestPort_01 = "null";
+            }
+
+
+            #region Routing details
+
+            string Current_Date_for_defaultflight = DateTime.Now.ToString("dd");
+            driver.FindElement(By.XPath(".//*[@id='imgairport']")).Click();
+
+            driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillOriginAirport_txtCode']")).SendKeys(Origin_Port);
+
+            if (!string.IsNullOrEmpty(Destn_Port))//check empty
+            {
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(Destn_Port);
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute1_txtCode']")).SendKeys(Via01);
+                IWebElement btn_via2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtCode']"));
+                btn_via2.SendKeys(Via02);
+                result = PTEGE.TryFindElement(driver, ".//*[@id='ctl00_hldPage_ViaRoute2_txtName']");
+                if (result == true)
+                {
+                    IWebElement via_2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtName']"));
+                    via_2.SendKeys(Keys.Tab + Keys.Enter);
+                }
+               
+            
+                Thread.Sleep(1000);
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys("123");
+                string tomorrow = DateTime.Now.AddDays(1).ToString("dd/MM/yyyy");
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(tomorrow);
+
+
+            }
+            else if (!string.IsNullOrEmpty(Via2_01))
+            {
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']")).SendKeys(Via2_01);
+                IWebElement viaroute1 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute1_txtCode']"));
+                viaroute1.SendKeys(Via1_01);
+
+                result = PTEGE.TryFindElement(driver, ".//*[@id='ctl00_hldPage_ViaRoute2_txtName']");
+                if (result == true)
+                {
+                    IWebElement via_2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtName']"));
+                    via_2.SendKeys(Keys.Tab + Keys.Enter);
+                }
+                //change keystab
+                //driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[9]/div[11]/button[1]")).Click();
+                Thread.Sleep(1000);
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys("123");
+                string tomorrow = DateTime.Now.AddDays(1).ToString("dd/MM/yyyy");     
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(tomorrow);
+
+
+            }
+            else
+            {
+                IWebElement via1 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtCode']"));
+                via1.SendKeys(Via1);
+                result = PTEGE.TryFindElement(driver, ".//*[@id='ctl00_hldPage_ViaRoute2_txtName']");
+                if (result == true)
+                {
+                    IWebElement via_2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ViaRoute2_txtName']"));
+                    via_2.SendKeys(Keys.Tab + Keys.Enter);
+                }
+
+                result = PTEGE.TryFindElement(driver, ".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtName']");
+                if (result == true)
+                {
+                    IWebElement via_2 = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillDestAirport_txtName']"));
+                    via_2.SendKeys(Keys.Tab + Keys.Enter);
+                }
+                // driver.FindElement(By.XPath(".//*[@id='aspnetForm']/div[9]/div[11]/button[1]")).Click();
+                Thread.Sleep(1000);
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightno1']")).SendKeys("123");
+                string tomorrow = DateTime.Now.AddDays(1).ToString("dd/MM/yyyy");
+                driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtflightdate1']")).SendKeys(tomorrow);
+            }
+
+            #endregion
+
+            #region chargecode
+            if (!string.IsNullOrEmpty(Charge_code))
+            {
+                SelectElement chgcode = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ddlChargeCode']")));
+                chgcode.SelectByText(Charge_code);
+            }
+            else
+            {
+                SelectElement chgcode = new SelectElement(driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_ddlChargeCode']")));
+                chgcode.SelectByText("PX");
+            }
+            #endregion
+            string HandlingInfo_01 = Handling_Information.Replace("( +)", " ").Trim();
+            IWebElement handling = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_txtssr']"));
+            handling.Clear();
+            handling.SendKeys(HandlingInfo_01);
+
+            #region dimension
+            //click on image dimension
+            driver.FindElement(By.XPath(".//*[@id='addDimensions_1']")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='txtNoPcs_1']"))));
+            Thread.Sleep(300);
+            driver.FindElement(By.XPath(".//*[@id='txtNoPcs_1']")).SendKeys(No_pcs);
+//remove
+            driver.FindElement(By.XPath(".//*[@id='txtNoPcs_1']")).SendKeys(No_pcs);
+
+            driver.FindElement(By.XPath(".//*[@id='txtLength_1']")).SendKeys("10");
+            driver.FindElement(By.XPath(".//*[@id='txtWidth_1']")).SendKeys("10");
+            driver.FindElement(By.XPath(".//*[@id='txtHeight_1']")).SendKeys("10");
+            IWebElement uldo = driver.FindElement(By.XPath(".//*[@id='txtULDOwnerCode_1']"));
+            uldo.Click();
+            uldo.SendKeys(Keys.Tab + Keys.Tab + Keys.Enter);
+
+            #endregion
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath(".//*[@id='txtCgGrWt_1']"))));
+            Thread.Sleep(300);
+
+            driver.FindElement(By.XPath(".//*[@id='txtCgGrWt_1']")).SendKeys(Gross_Wt);
+
+
+            #region rateclass
+            string RateClass = null;
+            RateClass = Rate_Class;
+            string RateClass_01 = null;
+            RateClass_01= RateClass.Replace("( +)", " ").Trim();
+            if (RateClass_01.Contains(""))
+            {
+                RateClass_01 = "null";
+            }
+
+            if (RateClass_01 != "null")
+            {
+                SelectElement rc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='selRateClass_1']")));
+                rc1.SelectByText(RateClass_01);
+               
+            }
+            else
+            {
+                SelectElement rc1 = new SelectElement(driver.FindElement(By.XPath(".//*[@id='selRateClass_1']")));
+                rc1.SelectByText("Q");
+            }
+            #endregion
+
+            #region commodity no
+
+            string ComdityNo_01 = null;
+            ComdityNo_01=Commodity_No.Replace("( +)", " ").Trim();
+
+            if (Rate_Class.Contains("C") || Rate_Class.Contains("S"))
+            {
+                if (Commodity_No == "null" || Commodity_No== " ")
+                {
+                    driver.FindElement(By.XPath(".//*[@id='txtCommNo_1']")).SendKeys("111");
+                }
+                else
+                {
+                    driver.FindElement(By.XPath(".//*[@id='txtCommNo_1']")).SendKeys(ComdityNo_01);
+                }
+
+            }
+            #endregion
+
+            #region charges
+
+            string Charge_01 = null;
+            Charge_01= Charges.Replace("( +)", " ").Trim();
+
+            if (Charge_01.Contains("null") || Charge_01.Contains(""))
+            {
+                driver.FindElement(By.XPath(".//*[@id='txtCgRate_1']")).SendKeys("1");
+            }
+            else
+            {
+                driver.FindElement(By.XPath(".//*[@id='txtCgRate_1']")).SendKeys(Charge_01);
+                Thread.Sleep(1000);
+            }
+            #endregion
+
+            #region nature
+            string nature = Nature;
+            Thread.Sleep(1000);
+            nature = nature.Replace("[^a-zA-Z0-9]", " ");
+            string nature_01 = nature.Replace("( +)", " ").Trim();
+            driver.FindElement(By.XPath(".//*[@id='txtCgDesc_1']")).SendKeys(nature_01);
+            IWebElement txtcode = driver.FindElement(By.XPath(".//*[@id='ctl00_hldPage_GenericAutoFillCity_txtCode']"));
+            txtcode.SendKeys("BOM");
+            txtcode.SendKeys(Keys.Control + "a");
+            Thread.Sleep(3000);
+            txtcode.SendKeys(Keys.ArrowDown);
+            txtcode.SendKeys(Keys.Tab);
+            #endregion
+            driver.FindElement(By.XPath("//input[@id='ctl00_hldPage_btnSaveAwb']")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.Id("ctl00_hldPage_btnCHANo"))));
+            Thread.Sleep(300);
+            string message = driver.FindElement(By.Id("ctl00_hldPage_lblMessage2")).Text;
+            Console.WriteLine(message);
+            if (message.Contains("AWB created successfully."))
+            {
+
+                strWriter.WriteLine("AWB created for  "+ Prefix+"-" + awbno + "");
+                PTEGE.UpdatePingStatus(Prefix, awbno, strWriter);
+                driver.FindElement(By.Id("ctl00_hldPage_btnCHANo")).Click();
+            }
+           
+            
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath("//a[contains(.,'Home')]"))));
+            Thread.Sleep(300);
+            driver.FindElement(By.XPath("//a[contains(.,'Log Out')]")).Click();
+            new WebDriverWait(driver, TimeSpan.FromSeconds(100)).Until(ExpectedConditions.ElementIsVisible((By.XPath("//a[contains(.,'Home')]"))));
+            Thread.Sleep(300);
+            driver.Close();
+            driver.Quit();           
+            strWriter.Flush();
+            strWriter.Close();
+            strWriter.Dispose();
+            #endregion
+        }
+    }
+}

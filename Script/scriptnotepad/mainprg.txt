@@ -1,0 +1,257 @@
+using Microsoft.Office.Interop.Outlook;
+using PingAutomation;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+namespace PingAutomation
+{
+    class Program
+    {
+        static string ClientName = null,
+        Prefix = null,
+        AWBNo = null,
+        HAWBcount = null,
+        Shipmentstatus = null;
+         
+
+        static void Main(string[] args)
+        {
+            int MoveFile;
+           // create c1 = new create();
+            //c1.createawb(@"E:\JITESH\PingAutomation\Output_File\20190114_123638.xls", "MAGNUM CARGO PVT. LTD", "020");
+
+            FileStream files;
+            StreamWriter strWriter;
+            String FileName = ConfigurationManager.AppSettings["LogfilePath"] + @"\PingAutomation" + DateTime.Now.ToString("dd-MMM-yyyy") + ".txt";
+            files = new FileStream(FileName, FileMode.Append, FileAccess.Write, FileShare.None);
+            strWriter = new StreamWriter(files);
+            strWriter.WriteLine("---------------------------------------------------------------");
+            strWriter.WriteLine("Log generated at " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm"));
+            strWriter.WriteLine(" ");
+
+            #region datatable of status 2-ACk and hawb count 0
+            DataSet TrackerData = new DataSet();
+            GeneralMethods PTEGE = new GeneralMethods();
+            TrackerData = PTEGE.isPresentontracker();
+            int o = TrackerData.Tables[0].Rows.Count;
+            #endregion
+            if (o >= 1)
+            {
+                #region get clientdetails from tracker
+
+                for (int w = 0; w < o; w++)
+                {
+                    ClientName = TrackerData.Tables["Table1"].Rows[w]["Client_Name"].ToString();
+                    Prefix = TrackerData.Tables["Table1"].Rows[w]["Pfx"].ToString();
+                    AWBNo = TrackerData.Tables["Table1"].Rows[w]["AWB_No"].ToString();
+                    HAWBcount = TrackerData.Tables["Table1"].Rows[w]["Hawb Count"].ToString();
+                    Shipmentstatus = TrackerData.Tables["Table1"].Rows[w]["Shipment_Status"].ToString();
+                    string a = AWBNo.Substring(0, 4);
+                    string b = AWBNo.Substring(4, 4);
+                    string spaceAWB = a + " " + b;
+
+                    DataSet dd = new DataSet();
+                    string excelpath = ConfigurationManager.AppSettings["RuleExcel_Ping"].ToString();
+                    dd = PTEGE.ImportexcelData(excelpath, ClientName);
+                    int v = dd.Tables[0].Rows.Count;
+
+                    for (int h = 0; h < v; h++)
+                    {
+                        string Prefixexcl = dd.Tables["Sheet1"].Rows[h][1].ToString();
+
+                        if (Prefixexcl.Contains(Prefix))
+                        {
+                            string Rule_Nm = dd.Tables["Sheet1"].Rows[h][2].ToString();
+                            if (!Rule_Nm.Contains("Not_Done"))
+                            {                            
+
+                            #endregion
+
+                            #region pst
+                            string fpath = null;
+                            try
+                            {
+                                IEnumerable<MailItem> mailItems = readPst(ConfigurationManager.AppSettings["PSTFilePath"].ToString(), ConfigurationManager.AppSettings["PSTFolder"].ToString());
+                                foreach (MailItem mailItem in mailItems)
+                                {
+                                    string ReceivedTime = string.Empty, Sender = string.Empty, MailBody = string.Empty;
+                                    string Subject = string.Empty;
+
+                                    Sender = mailItem.SenderName;
+                                    Subject = mailItem.Subject;
+
+
+                                    List<string> tempFileName = new List<string>();
+                                    List<string> tempPDFFileName = new List<string>();
+
+                                    string temp = mailItem.Attachments[1].FileName;
+
+                                    String FolderName = NewFolderName();
+                                    int k = 1;
+
+                                    int j = mailItem.Attachments.Count;
+                                    if (mailItem.Attachments.Count == 0)
+                                    {
+                                        Application app1 = new Application();
+                                        NameSpace outlookNs1 = app1.GetNamespace("MAPI");
+                                        MAPIFolder MoveToFolder1 = outlookNs1.GetDefaultFolder(Microsoft.Office.Interop.Outlook.OlDefaultFolders.olFolderDrafts);
+                                        mailItem.Move(MoveToFolder1);
+                                        strWriter.WriteLine(mailItem.Subject + " Have Moved to Draft folder successfully as attachment is not present");
+                                        strWriter.WriteLine(" ");
+                                        strWriter.WriteLine("-------------------------------------------------------");
+                                        strWriter.WriteLine(" ");
+                                        MoveFile = 0;
+                                        break;
+                                    }
+
+                                    if (Subject.Contains(AWBNo) || Subject.Contains(spaceAWB))
+                                    {
+                                        DataSet ex = new DataSet();
+                                        excelpath = ConfigurationManager.AppSettings["RuleExcel_Ping"].ToString();
+                                        ex = PTEGE.ImportexcelData(excelpath, ClientName);
+                                        int p = ex.Tables[0].Rows.Count;
+
+                                        for (int x = 0; x < p; x++)
+                                        {
+                                            string Prefixexcel = ex.Tables["Sheet1"].Rows[x][1].ToString();
+
+                                            if (Prefix.Equals(Prefixexcel))
+                                            {
+                                                string Rule_Name = ex.Tables["Sheet1"].Rows[x][2].ToString();
+                                                if (!Rule_Name.Contains("Not_Done"))
+                                                {
+                                                    fpath = ConfigurationManager.AppSettings["PDFFolderPath"].ToString();
+                                                    mailItem.Attachments[1].SaveAsFile(fpath + mailItem.Attachments[1].FileName);
+                                                    string filename = fpath + mailItem.Attachments[1].FileName;
+                                                    string newfilename;
+                                                    string newpath;
+                                                    if (!string.IsNullOrEmpty(spaceAWB))
+                                                    {
+                                                        spaceAWB = spaceAWB.Replace(" ", "");
+                                                        newfilename = Prefix + "-" + spaceAWB;
+
+                                                        newpath = fpath + newfilename + ".pdf";
+                                                        if (File.Exists(newpath))
+                                                        {
+                                                            File.Delete(newpath);
+                                                        }
+                                                        System.IO.File.Move(filename, newpath);
+                                                    }
+                                                    else
+                                                    {
+                                                        newpath = filename;
+                                                    }
+
+
+                                                    string rulename = Rule_Name + "_" + Prefixexcel;
+                                                    String targetfile = DateTime.Now.ToString("yyyyMMdd_hhmmss");
+                                                    String targetfile1 = targetfile + ".xls";
+                                                    string targetfolderpath = ConfigurationManager.AppSettings["Output_File_Path"].ToString();
+                                                    string outputfile = targetfolderpath + targetfile1;
+                                                    Process process = new Process();
+                                                    process.StartInfo.FileName = "cmd.exe";
+                                                    process.StartInfo.CreateNoWindow = true;
+                                                    process.StartInfo.RedirectStandardInput = true;
+                                                    process.StartInfo.RedirectStandardOutput = true;
+                                                    process.StartInfo.UseShellExecute = false;
+                                                    process.Start();
+                                                    process.StandardInput.WriteLine("PDECMD -R\"" + rulename + "\" -F\"" + newpath + "\" -O\"" + outputfile);
+                                                    string xyz = process.StandardOutput.ReadLine();
+                                                    process.StandardInput.Flush();
+                                                    process.StandardInput.Close();
+                                                    process.WaitForExit();
+                                                    Console.WriteLine(process.StandardOutput.ReadToEnd());
+                                                    string xyz1 = process.StandardOutput.ReadLine();
+                                                    string outputReader = process.StandardOutput.ReadToEnd();
+
+                                                    create c = new create();
+                                                    c.createawb(outputfile, ClientName, Prefix, AWBNo, strWriter);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            catch (System.Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
+                            #endregion
+                        }
+                    }
+                }
+            }
+            }
+        }
+
+        #region splitstring
+        static IEnumerable<string> Split(string str, int chunkSize)
+        {
+            return Enumerable.Range(0, str.Length / chunkSize)
+                .Select(i => str.Substring(i * chunkSize, chunkSize));
+        }
+        #endregion
+
+        #region PST read
+
+        private static IEnumerable<MailItem> readPst(string pstFilePath, string pstName) // Will return the list of mail items present in Inbox....
+        {
+            List<MailItem> mailItems = new List<MailItem>();
+            Application app = new Application();
+            NameSpace outlookNs = app.GetNamespace("MAPI");
+            // Add PST file (Outlook Data File) to Default Profile
+            outlookNs.AddStore(pstFilePath);
+            int COUNT = outlookNs.Folders.Count;
+
+            MAPIFolder inboxFolder = outlookNs.GetDefaultFolder(OlDefaultFolders.olFolderInbox);
+
+            Items mailItems1 = inboxFolder.Items;
+            foreach (MAPIFolder folder in outlookNs.Folders)
+            {              
+                if (folder.FolderPath == "\\\\" + ConfigurationManager.AppSettings["MailFolder"].ToString())
+                {                   
+                    foreach (MAPIFolder subFolder in folder.Folders)
+                    {                        
+                        if (subFolder.FolderPath == "\\\\" + ConfigurationManager.AppSettings["MailFolder"].ToString() + "\\Inbox")
+                        {
+                            foreach (MAPIFolder InboxSubFolder in subFolder.Folders)
+                            {                                
+                                if (InboxSubFolder.FolderPath == "\\\\" + ConfigurationManager.AppSettings["MailFolder"].ToString() + "\\Inbox\\PING_TRACKER")
+                                {
+                                    foreach (Microsoft.Office.Interop.Outlook.MailItem item in InboxSubFolder.Items)
+                                    {
+                                        if (item is MailItem)
+                                        {
+                                            mailItems.Add(item);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return mailItems;
+        }
+
+        #endregion
+
+        #region newfolder
+        static string NewFolderName()
+        {
+            // Eliminating following Special Characters from subject ............. " * / : < > ? \ | 
+            string f = DateTime.Now.ToString("dd-MM-yyyy-HH-mm-ss");
+
+            return f;
+        }
+        #endregion
+    }
+}
